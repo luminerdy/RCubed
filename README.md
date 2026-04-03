@@ -16,9 +16,10 @@ A Raspberry Pi-powered robot that solves Rubik's cubes using computer vision and
 ```
 rcubed/
 ├── src/                    # Main application code
+│   ├── cube_controller.py  # Modular robot control (standard notation)
 │   ├── scan_v7.py          # 6-face scanning sequence
 │   ├── solve_cube.py       # Kociemba solver integration
-│   ├── move_executor.py    # Translates moves to servo commands
+│   ├── move_executor.py    # Legacy move executor
 │   ├── auto_solve.py       # Full scan→solve→execute pipeline
 │   ├── collect_training_v2.py  # Training data collection
 │   └── maestro.py          # Pololu Maestro servo library
@@ -29,6 +30,7 @@ rcubed/
 ├── config/                 # Configuration files
 │   └── servo_config.json   # Servo calibration values
 ├── docs/                   # Documentation
+│   ├── CUBE-CONTROLLER.md  # Controller API reference
 │   ├── RULES.md            # Rotation rules and mechanics
 │   ├── SCAN-SEQUENCE-FINAL.md
 │   └── ...
