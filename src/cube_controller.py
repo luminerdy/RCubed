@@ -84,11 +84,11 @@ class CubeOrientation:
     D: str = 'G'
     
     def y(self):
-        """y rotation: same as U move direction. F→L, R→F, B→R, L→B"""
+        """y rotation (standard): R→F, F→L, L→B, B→R (right comes to front)"""
         self.F, self.L, self.B, self.R = self.R, self.F, self.L, self.B
     
     def yp(self):
-        """y' rotation: F→R, L→F, B→L, R→B"""
+        """y' rotation (standard): L→F, F→R, R→B, B→L (left comes to front)"""
         self.F, self.R, self.B, self.L = self.L, self.F, self.R, self.B
     
     def y2(self):
@@ -96,12 +96,12 @@ class CubeOrientation:
         self.R, self.L = self.L, self.R
     
     def x(self):
-        """x rotation: same as R move direction. F→U, U→B, B→D, D→F"""
-        self.F, self.U, self.B, self.D = self.D, self.F, self.U, self.B
+        """x rotation (standard): U→F, F→D, D→B, B→U (top tumbles toward you)"""
+        self.F, self.D, self.B, self.U = self.U, self.F, self.D, self.B
     
     def xp(self):
-        """x' rotation: F→D, D→B, B→U, U→F"""
-        self.F, self.D, self.B, self.U = self.U, self.F, self.D, self.B
+        """x' rotation (standard): D→F, F→U, U→B, B→D (bottom tumbles toward you)"""
+        self.F, self.U, self.B, self.D = self.D, self.F, self.U, self.B
     
     def x2(self):
         self.F, self.B = self.B, self.F
@@ -251,17 +251,17 @@ class CubeController:
                 self.engage(g)
     
     def _do_y(self):
-        """Physical y rotation: 2:B→A, 8:B→C"""
-        self._prep_y()
-        self._set_gripper(2, 'A')
-        self._set_gripper(8, 'C')
-        time.sleep(TIMING['y_rotation'])
-    
-    def _do_yp(self):
-        """Physical y' rotation: 2:B→C, 8:B→A"""
+        """Physical y rotation (standard): 2:B→C, 8:B→A (right to front)"""
         self._prep_y()
         self._set_gripper(2, 'C')
         self._set_gripper(8, 'A')
+        time.sleep(TIMING['y_rotation'])
+    
+    def _do_yp(self):
+        """Physical y' rotation (standard): 2:B→A, 8:B→C (left to front)"""
+        self._prep_y()
+        self._set_gripper(2, 'A')
+        self._set_gripper(8, 'C')
         time.sleep(TIMING['y_rotation'])
     
     def _do_y2(self):
@@ -353,9 +353,9 @@ class CubeController:
         Transition robot to target orientation.
         target: 'normal', 'y', 'yp'
         
-        'normal' = standard (F at front)
-        'y' = rotated so F is now at R gripper
-        'yp' = rotated so B is now at R gripper
+        'normal' = standard (F at front, camera sees F)
+        'y' = after y rotation: B is at R gripper (for B moves)
+        'yp' = after y' rotation: F is at R gripper (for F moves)
         """
         current = self.robot_orientation
         if current == target:
@@ -532,37 +532,37 @@ class CubeController:
     
     def F(self):
         self._log("  F")
-        self._transition_to('y')  # Rotate so F is at R
+        self._transition_to('yp')  # y' puts F at R gripper
         self._turn(6, 'cw')
         self.move_count += 1
     
     def Fp(self):
         self._log("  F'")
-        self._transition_to('y')
+        self._transition_to('yp')
         self._turn(6, 'ccw')
         self.move_count += 1
     
     def F2(self):
         self._log("  F2")
-        self._transition_to('y')
+        self._transition_to('yp')
         self._turn(6, '180')
         self.move_count += 1
     
     def B(self):
         self._log("  B")
-        self._transition_to('yp')  # Rotate so B is at R
+        self._transition_to('y')  # y puts B at R gripper
         self._turn(6, 'cw')
         self.move_count += 1
     
     def Bp(self):
         self._log("  B'")
-        self._transition_to('yp')
+        self._transition_to('y')
         self._turn(6, 'ccw')
         self.move_count += 1
     
     def B2(self):
         self._log("  B2")
-        self._transition_to('yp')
+        self._transition_to('y')
         self._turn(6, '180')
         self.move_count += 1
     
