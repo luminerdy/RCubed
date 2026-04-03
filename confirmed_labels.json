@@ -1,0 +1,27 @@
+{
+  "confirmed": [
+    "scan_009/face_1_front.jpg",
+    "scan_009/face_2_back.jpg",
+    "scan_009/face_3_right.jpg",
+    "scan_009/face_4_left.jpg",
+    "scan_009/face_5_top.jpg",
+    "scan_009/face_6_bottom.jpg",
+    "scan_011/face_1_front.jpg",
+    "scan_011/face_2_back.jpg",
+    "scan_011/face_3_right.jpg",
+    "scan_011/face_4_left.jpg",
+    "scan_011/face_5_top.jpg",
+    "scan_011/face_6_bottom.jpg",
+    "scan_016/face_1_front.jpg",
+    "scan_016/face_2_back.jpg",
+    "scan_016/face_3_right.jpg",
+    "scan_016/face_4_left.jpg",
+    "scan_016/face_5_top.jpg",
+    "scan_016/face_6_bottom.jpg"
+  ],
+  "reviewed_scans": [
+    "scan_009",
+    "scan_011",
+    "scan_016"
+  ]
+}

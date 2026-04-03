@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RCubed Sticker Labeler</title>
+    <link rel="stylesheet" href="/static/css/style.css?v=3">
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <header>
+            <h1>🎲 RCubed Sticker Labeler</h1>
+            
+            <!-- Calibration warning -->
+            {% if not calibrated %}
+            <div class="calibration-warning">
+                ⚠️ Detector not calibrated. For best results, scan a solved cube first and use Calibration Mode.
+            </div>
+            {% endif %}
+            
+            <!-- Progress -->
+            <div class="progress-bar">
+                <span class="progress-text">
+                    Scan <span id="current-scan">0</span> / <span id="total-scans">0</span>
+                </span>
+                <progress id="progress" value="0" max="100"></progress>
+            </div>
+            
+            <!-- Color Counter -->
+            <div class="color-counter" id="color-counter">
+                <div class="counter-label">Color Counts (should be 9 each):</div>
+                <div class="counter-grid">
+                    <div class="count-item" data-color="W">
+                        <span class="color-box" style="background: white; color: black;">W</span>
+                        <span class="count" id="count-W">0</span>
+                    </div>
+                    <div class="count-item" data-color="Y">
+                        <span class="color-box" style="background: yellow; color: black;">Y</span>
+                        <span class="count" id="count-Y">0</span>
+                    </div>
+                    <div class="count-item" data-color="R">
+                        <span class="color-box" style="background: red; color: white;">R</span>
+                        <span class="count" id="count-R">0</span>
+                    </div>
+                    <div class="count-item" data-color="O">
+                        <span class="color-box" style="background: orange; color: black;">O</span>
+                        <span class="count" id="count-O">0</span>
+                    </div>
+                    <div class="count-item" data-color="B">
+                        <span class="color-box" style="background: blue; color: white;">B</span>
+                        <span class="count" id="count-B">0</span>
+                    </div>
+                    <div class="count-item" data-color="G">
+                        <span class="color-box" style="background: green; color: white;">G</span>
+                        <span class="count" id="count-G">0</span>
+                    </div>
+                </div>
+                <div class="total-count">
+                    Total: <span id="total-count">0</span> / 54
+                </div>
+            </div>
+        </header>
+
+        <!-- Main Content: All 6 Faces -->
+        <main>
+            <div class="faces-grid">
+                <!-- Front Face -->
+                <div class="face-container" data-face="front">
+                    <div class="face-label">Front (F)</div>
+                    <div class="face-content">
+                        <img class="face-image" data-face="front" src="" alt="Front">
+                        <div class="sticker-grid" data-face="front">
+                            <!-- 9 stickers, created by JS -->
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Back Face -->
+                <div class="face-container" data-face="back">
+                    <div class="face-label">Back (B)</div>
+                    <div class="face-content">
+                        <img class="face-image" data-face="back" src="" alt="Back">
+                        <div class="sticker-grid" data-face="back">
+                            <!-- 9 stickers, created by JS -->
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Right Face -->
+                <div class="face-container" data-face="right">
+                    <div class="face-label">Right (R)</div>
+                    <div class="face-content">
+                        <img class="face-image" data-face="right" src="" alt="Right">
+                        <div class="sticker-grid" data-face="right">
+                            <!-- 9 stickers, created by JS -->
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Left Face -->
+                <div class="face-container" data-face="left">
+                    <div class="face-label">Left (L)</div>
+                    <div class="face-content">
+                        <img class="face-image" data-face="left" src="" alt="Left">
+                        <div class="sticker-grid" data-face="left">
+                            <!-- 9 stickers, created by JS -->
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Top Face -->
+                <div class="face-container" data-face="top">
+                    <div class="face-label">Top (U)</div>
+                    <div class="face-content">
+                        <img class="face-image" data-face="top" src="" alt="Top">
+                        <div class="sticker-grid" data-face="top">
+                            <!-- 9 stickers, created by JS -->
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Bottom Face -->
+                <div class="face-container" data-face="bottom">
+                    <div class="face-label">Bottom (D)</div>
+                    <div class="face-content">
+                        <img class="face-image" data-face="bottom" src="" alt="Bottom">
+                        <div class="sticker-grid" data-face="bottom">
+                            <!-- 9 stickers, created by JS -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Color Picker Modal -->
+            <div id="color-picker" class="modal hidden">
+                <div class="modal-content">
+                    <h3>Select Color</h3>
+                    <div class="color-buttons">
+                        <button class="color-btn" data-color="W" style="background: white; color: black;">1: White</button>
+                        <button class="color-btn" data-color="Y" style="background: yellow; color: black;">2: Yellow</button>
+                        <button class="color-btn" data-color="R" style="background: red; color: white;">3: Red</button>
+                        <button class="color-btn" data-color="O" style="background: orange; color: black;">4: Orange</button>
+                        <button class="color-btn" data-color="B" style="background: blue; color: white;">5: Blue</button>
+                        <button class="color-btn" data-color="G" style="background: green; color: white;">6: Green</button>
+                    </div>
+                    <button id="cancel-btn" class="cancel-btn">Cancel (Esc)</button>
+                </div>
+            </div>
+        </main>
+
+        <!-- Controls -->
+        <footer>
+            <div class="controls">
+                <button id="prev-btn" class="nav-btn">← Previous</button>
+                <button id="confirm-btn" class="confirm-btn" disabled>✓ Confirm & Next</button>
+                <button id="next-btn" class="nav-btn">Next →</button>
+                <button id="delete-btn" class="delete-btn" onclick="deleteScan()">🗑️ Delete</button>
+            </div>
+            <div class="keyboard-hints">
+                <strong>Keyboard:</strong> ← → navigate | <strong>Hover + 1-6</strong> to set color | <strong>Click</strong> to cycle colors | Enter to confirm
+            </div>
+        </footer>
+    </div>
+
+    <script src="/static/js/labeler.js?v=6"></script>
+</body>
+</html>

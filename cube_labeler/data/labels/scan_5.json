@@ -1,0 +1,126 @@
+{
+  "scan_id": 5,
+  "faces": {
+    "back": {
+      "grid": [
+        [
+          "R",
+          "Y",
+          "G"
+        ],
+        [
+          "O",
+          "B",
+          "O"
+        ],
+        [
+          "O",
+          "G",
+          "W"
+        ]
+      ],
+      "image": "scan_005_face_2_back.jpg"
+    },
+    "bottom": {
+      "grid": [
+        [
+          "G",
+          "G",
+          "W"
+        ],
+        [
+          "R",
+          "O",
+          "B"
+        ],
+        [
+          "G",
+          "W",
+          "O"
+        ]
+      ],
+      "image": "scan_005_face_6_bottom.jpg"
+    },
+    "front": {
+      "grid": [
+        [
+          "B",
+          "R",
+          "R"
+        ],
+        [
+          "O",
+          "G",
+          "Y"
+        ],
+        [
+          "R",
+          "R",
+          "Y"
+        ]
+      ],
+      "image": "scan_005_face_1_front.jpg"
+    },
+    "left": {
+      "grid": [
+        [
+          "W",
+          "W",
+          "W"
+        ],
+        [
+          "G",
+          "W",
+          "W"
+        ],
+        [
+          "R",
+          "W",
+          "B"
+        ]
+      ],
+      "image": "scan_005_face_4_left.jpg"
+    },
+    "right": {
+      "grid": [
+        [
+          "Y",
+          "Y",
+          "Y"
+        ],
+        [
+          "G",
+          "Y",
+          "B"
+        ],
+        [
+          "B",
+          "R",
+          "Y"
+        ]
+      ],
+      "image": "scan_005_face_3_right.jpg"
+    },
+    "top": {
+      "grid": [
+        [
+          "G",
+          "B",
+          "B"
+        ],
+        [
+          "O",
+          "R",
+          "Y"
+        ],
+        [
+          "O",
+          "B",
+          "O"
+        ]
+      ],
+      "image": "scan_005_face_5_top.jpg"
+    }
+  },
+  "verified": true
+}
