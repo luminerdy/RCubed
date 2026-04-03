@@ -11,25 +11,30 @@ A Raspberry Pi-powered robot that solves Rubik's cubes using computer vision and
 - **Camera** for cube scanning
 - Based on [RCR3D design](https://rcr3d.com) by O.T. Vinta
 
-## Software
-
-- Python 3 with OpenCV for vision
-- Kociemba algorithm for solving
-- Custom YOLOv8 model (in progress) for color detection
-- Flask web app for label review
-
 ## Project Structure
 
 ```
 rcubed/
-├── scan_v7.py           # 6-face scanning sequence
-├── solve_cube.py        # Kociemba solver integration
-├── move_executor.py     # Translates moves to servo commands
-├── auto_solve.py        # Full scan→solve→execute pipeline
-├── collect_training_v2.py  # Training data collection
-├── cube_labeler/        # Web app for labeling training data
-├── servo_config.json    # Servo calibration values
-└── first_pass_labels.json  # Training labels
+├── src/                    # Main application code
+│   ├── scan_v7.py          # 6-face scanning sequence
+│   ├── solve_cube.py       # Kociemba solver integration
+│   ├── move_executor.py    # Translates moves to servo commands
+│   ├── auto_solve.py       # Full scan→solve→execute pipeline
+│   ├── collect_training_v2.py  # Training data collection
+│   └── maestro.py          # Pololu Maestro servo library
+├── scripts/                # Utilities and dev tools
+│   ├── servo_calibrate.py  # Interactive calibration
+│   ├── test_grippers.py    # Gripper testing
+│   └── ...
+├── config/                 # Configuration files
+│   └── servo_config.json   # Servo calibration values
+├── docs/                   # Documentation
+│   ├── RULES.md            # Rotation rules and mechanics
+│   ├── SCAN-SEQUENCE-FINAL.md
+│   └── ...
+├── cube_labeler/           # Flask web app for training data
+├── training_scans/         # Training images (not in git)
+└── tmp/                    # Temporary files (not in git)
 ```
 
 ## Progress

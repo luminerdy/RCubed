@@ -1,24 +1,23 @@
-# Python
-__pycache__/
-*.py[cod]
-*$py.class
-*.so
-.Python
-venv/
-.env
-
 # Training data (too large for git)
 training_scans/
-training_scans_backup*/
+training_scans_backup_*/
 
-# Temp files
+# Temporary files
+tmp/
+*.jpg
+*.png
 *.log
-*.tmp
-.DS_Store
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+.env
+venv/
 
 # IDE
 .vscode/
 .idea/
 
-# Backup files
+# Backups
 *.bak
