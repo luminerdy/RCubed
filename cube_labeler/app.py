@@ -15,7 +15,7 @@ from collections import Counter
 app = Flask(__name__)
 
 # Paths - relative to cube_labeler directory
-BASE_DIR = Path(__file__).parent.parent  # /home/luminerdy/rcubed
+BASE_DIR = Path(__file__).parent.parent  # repo root
 TRAINING_DIR = BASE_DIR / "training_scans"
 LABELS_FILE = BASE_DIR / "first_pass_labels.json"
 CONFIRMED_FILE = BASE_DIR / "confirmed_labels.json"
