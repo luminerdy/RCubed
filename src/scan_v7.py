@@ -24,6 +24,7 @@ import cv2
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import maestro
+import robot_state
 
 # ─── Config ─────────────────────────────────────────────────────────────────
 
@@ -422,15 +423,27 @@ def main():
         cube = scan(ctrl, cam)
         print("\n═══ RESET ═══")
         # After return sequence: 0&6 at C/A, 1&7 holding, 3&9 retracted, 2&8 at B
-        # Just engage 3&9 - now all 4 RPs hold, all grippers at B (0&6 still at C/A but that's ok)
+        # Engage 3&9 — now all 4 RPs hold, ready for solve
         ctrl.setSpeed(3, 30)
         ctrl.setSpeed(9, 30)
         set_rp(3, "hold", ctrl)
         set_rp(9, "hold", ctrl)
         wait(1.5)
         print("Done - cube held, ready for solve")
+
+        # Save state: grip dict tracks final gripper positions, all RPs now holding
+        robot_state.save(
+            gripper_pos=dict(grip),
+            rp_status={1: 'hold', 3: 'hold', 7: 'hold', 9: 'hold'},
+        )
+
     except KeyboardInterrupt:
         print("\n⚠️ Interrupted")
+        robot_state.invalidate()
+    except Exception as e:
+        print(f"\n❌ Error: {e}")
+        robot_state.invalidate()
+        raise
     finally:
         cam.release()
         ctrl.close()
