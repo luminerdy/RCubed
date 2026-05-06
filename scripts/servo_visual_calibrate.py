@@ -11,7 +11,9 @@ import time
 import cv2
 import requests
 
-sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+from pathlib import Path
+REPO_ROOT = Path(__file__).parent.parent
+sys.path.insert(0, str(REPO_ROOT / 'src'))
 
 try:
     import maestro
@@ -35,7 +37,7 @@ SERVOS = {
     9: {"name": "Bottom MOVE", "type": "move"}
 }
 
-CONFIG_FILE = "/home/luminerdy/rcubed/servo_config.json"
+CONFIG_FILE = REPO_ROOT / 'config' / 'servo_config.json'
 
 def send_telegram_photo(image_path, caption):
     """Send photo to Telegram"""
@@ -54,7 +56,9 @@ def send_telegram_photo(image_path, caption):
         print(f"⚠️  Telegram send failed: {e}")
         return False
 
-def capture_image(filename="/home/luminerdy/rcubed/calibration_view.jpg"):
+def capture_image(filename=None):
+    if filename is None:
+        filename = str(Path(__file__).parent.parent / 'calibration_view.jpg')
     """Capture image from camera"""
     cap = cv2.VideoCapture(0)
     

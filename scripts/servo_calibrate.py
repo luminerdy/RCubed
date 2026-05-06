@@ -9,8 +9,9 @@ import os
 import json
 import time
 
-# Add current directory to path
-sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+from pathlib import Path
+REPO_ROOT = Path(__file__).parent.parent
+sys.path.insert(0, str(REPO_ROOT / 'src'))
 
 try:
     import maestro
@@ -30,7 +31,7 @@ SERVOS = {
     9: {"name": "Bottom MOVE", "type": "move"}
 }
 
-CONFIG_FILE = "/home/luminerdy/rcubed/servo_config.json"
+CONFIG_FILE = Path(__file__).parent.parent / 'config' / 'servo_config.json'
 
 class ServoCalibrator:
     def __init__(self):

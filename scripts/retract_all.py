@@ -5,12 +5,14 @@ Retract all grippers to their retracted positions
 import sys
 import json
 import time
+from pathlib import Path
 
-sys.path.insert(0, '/home/luminerdy/rcubed')
+REPO_ROOT = Path(__file__).parent.parent
+sys.path.insert(0, str(REPO_ROOT / 'src'))
 import maestro
 
 # Load config
-with open('/home/luminerdy/rcubed/servo_config.json', 'r') as f:
+with open(REPO_ROOT / 'config' / 'servo_config.json', 'r') as f:
     config = json.load(f)
 
 # Connect to Maestro
@@ -25,10 +27,10 @@ print("\n⬅️  Retracting all grippers...")
 
 # MOVE servos: 1, 3, 7, 9
 servos_and_positions = [
-    (1, int(config['1']['positions']['retracted'])),
-    (3, int(config['3']['positions']['retracted'])),
-    (7, int(config['7']['positions']['retracted'])),
-    (9, int(config['9']['positions']['retracted']))
+    (1, int(config['rp']['1']['retracted'])),
+    (3, int(config['rp']['3']['retracted'])),
+    (7, int(config['rp']['7']['retracted'])),
+    (9, int(config['rp']['9']['retracted']))
 ]
 
 for servo, pos in servos_and_positions:

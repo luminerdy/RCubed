@@ -3,7 +3,8 @@
 Set all servos to center position (6000) for gripper attachment
 """
 import sys
-sys.path.insert(0, '/home/luminerdy/rcubed')
+from pathlib import Path
+sys.path.insert(0, str(Path(__file__).parent.parent / 'src'))
 
 import maestro
 import time

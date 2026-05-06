@@ -7,6 +7,9 @@ Helps find optimal exposure and brightness settings for cube color detection
 import cv2
 import sys
 import os
+from pathlib import Path
+
+REPO_ROOT = Path(__file__).parent.parent
 
 def capture_with_settings(exposure=None, brightness=None, contrast=None):
     """Capture image with specific camera settings"""
@@ -59,7 +62,7 @@ def test_exposure_range():
         frame = capture_with_settings(exposure=exp)
         
         if frame is not None:
-            filename = f"/home/luminerdy/rcubed/exposure_test_{exp}.jpg"
+            filename = str(REPO_ROOT / f"exposure_test_{exp}.jpg")
             cv2.imwrite(filename, frame)
             
             # Calculate average brightness
@@ -114,7 +117,7 @@ def interactive_adjust():
             return
         
         # Save preview
-        cv2.imwrite('/home/luminerdy/rcubed/preview.jpg', frame)
+        cv2.imwrite(str(REPO_ROOT / 'preview.jpg'), frame)
         
         # Calculate brightness
         gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
