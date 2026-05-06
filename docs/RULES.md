@@ -138,6 +138,84 @@ When a gripper turns, it rotates the face it's holding.
 
 ---
 
+## Startup Safety
+
+### The Problem: Unknown Gripper State
+
+When the Pi powers on or a script crashes mid-operation, the gripper positions are unknown. Moving grippers directly to a target position without knowing where they are risks sweeping two adjacent grippers through the same position (e.g., both passing through C) — causing a collision.
+
+This is especially dangerous because:
+- Servos sweep through intermediate positions on the way to a target
+- A gripper at D sweeping to B passes through C on the way
+- If an adjacent gripper is sitting at C during that sweep, they collide
+- The collision rules only apply to *simultaneous* positions — a moving gripper can violate them mid-sweep
+
+### Safe Startup Sequence
+
+Safe startup is designed to reach all-B from any unknown starting state without risking collision.
+
+**Step 1: Retract all RPs (fast)**
+Pull all gripper arms away from center. This maximizes physical clearance between adjacent fingers and makes the following moves much safer.
+
+**Step 2: Move 0 & 6 to B simultaneously**
+Grippers 0 (left) and 6 (right) are on *opposite* sides — they are not adjacent and cannot collide with each other. Moving them together is safe regardless of where 2 & 8 are, because:
+- 0 is only adjacent to 2 and 8
+- 6 is only adjacent to 2 and 8
+- With RPs retracted, the physical clearance between 0/6 fingers and 2/8 fingers is large
+- Wait for both to settle fully before proceeding
+
+**Step 3: Move 2 & 8 to B simultaneously**
+Now that 0 & 6 are confirmed at B, the collision rules guarantee this is safe:
+`0&6 at B, 2&8 at A/C → SAFE`
+No matter where 2 and 8 are sweeping from, 0 and 6 are at B (not A or C), so no adjacent collision can occur.
+
+**Why not move all four at once?**
+Moving all four simultaneously from unknown positions could put adjacent grippers at A or C at the same moment mid-sweep.
+
+**Why not move one at a time?**
+One-at-a-time is safer but slower. Moving opposite pairs (0&6, then 2&8) gives the same safety guarantee in fewer steps since opposite grippers cannot collide with each other.
+
+### When Safe Startup Runs
+
+Safe startup is a **once-per-session** event — not a reset before every script. Running it unnecessarily wastes time and moves the cube.
+
+| Situation | Safe startup? |
+|-----------|--------------|
+| Pi just powered on | ✅ Yes |
+| Pi rebooted | ✅ Yes |
+| Script crashed mid-operation | ✅ Yes |
+| `retract_all.py` was run (emergency stop) | ✅ Yes |
+| Normal script-to-script transition | ❌ No — state is known |
+| After `scan_v7.py` completes | ❌ No — cube_controller trusts scan's state |
+
+### Session State File (`config/robot_state.json`)
+
+`src/robot_state.py` persists gripper and RP positions between scripts. Each script saves its end state; the next script loads it and skips safe startup if the state is valid.
+
+State is automatically **invalid** (safe startup forced) when:
+- The state file is older than the last reboot (timestamp < boot time)
+- A script crashed and called `robot_state.invalidate()`
+- `retract_all.py` ran (emergency stop marks state dirty)
+
+**Normal session flow:**
+```
+test_grippers.py  → safe startup (unknown state) → saves state
+scan_v7.py        → skips startup, trusts state  → saves state
+cube_controller   → skips startup, trusts state  → saves state on close
+```
+
+**State file structure:**
+```json
+{
+  "clean": true,
+  "timestamp": 1234567890.0,
+  "grippers": {"0": "C", "2": "B", "6": "A", "8": "B"},
+  "rp": {"1": "hold", "3": "hold", "7": "hold", "9": "hold"}
+}
+```
+
+---
+
 ## Camera View
 
 ### Gripper Finger Visibility
