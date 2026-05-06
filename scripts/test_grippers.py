@@ -16,6 +16,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parent.parent / 'src'))
 import maestro
+import robot_state
 
 # Servo calibration values (updated 2026-03-07)
 GRIPPER = {
@@ -35,6 +36,10 @@ RP = {
 GRIPPER_ACCEL = 110
 
 def main():
+    # Invalidate state up front — we're about to move everything
+    # and will save a fresh clean state at the end
+    robot_state.invalidate()
+
     print("Connecting to Maestro...")
     ctrl = maestro.Controller('/dev/ttyACM0')
     
@@ -161,7 +166,13 @@ def main():
     print("   Position: White front (F), Blue top (U)")
     print("   Grippers: 0&6 at B, 2 at C, 8 at A")
     print("   All RP: retracted")
-    
+
+    # Save clean state — grippers end at load position, all RPs retracted
+    robot_state.save(
+        gripper_pos={0: 'B', 2: 'C', 6: 'B', 8: 'A'},
+        rp_status={1: 'retracted', 3: 'retracted', 7: 'retracted', 9: 'retracted'},
+    )
+
     ctrl.close()
 
 if __name__ == "__main__":

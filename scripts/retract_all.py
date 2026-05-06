@@ -10,10 +10,14 @@ from pathlib import Path
 REPO_ROOT = Path(__file__).parent.parent
 sys.path.insert(0, str(REPO_ROOT / 'src'))
 import maestro
+import robot_state
 
 # Load config
 with open(REPO_ROOT / 'config' / 'servo_config.json', 'r') as f:
     config = json.load(f)
+
+# Gripper positions unknown after emergency retract — force safe startup next run
+robot_state.invalidate()
 
 # Connect to Maestro
 try:

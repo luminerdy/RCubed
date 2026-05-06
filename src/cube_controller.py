@@ -36,6 +36,7 @@ from typing import Optional, Literal, List, Tuple
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import maestro
+import robot_state
 
 # ═══════════════════════════════════════════════════════════════════════════
 # Configuration
@@ -139,33 +140,49 @@ class CubeController:
         self.port = port
         self.verbose = verbose
         self.ctrl: Optional[maestro.Controller] = None
-        
-        # Hardware state
-        self.gripper_pos = {0: 'B', 2: 'B', 6: 'B', 8: 'B'}
-        self.rp_status = {1: 'retracted', 3: 'retracted', 7: 'retracted', 9: 'retracted'}
-        
+
+        # Restore state from previous script if available
+        saved = robot_state.load()
+        if saved:
+            self.gripper_pos = saved['grippers']
+            self.rp_status   = saved['rp']
+            self._needs_safe_startup = False
+        else:
+            self.gripper_pos = {0: 'B', 2: 'B', 6: 'B', 8: 'B'}
+            self.rp_status   = {1: 'retracted', 3: 'retracted', 7: 'retracted', 9: 'retracted'}
+            self._needs_safe_startup = True
+
         # Cube state
         self.cube = CubeOrientation()
         self.robot_orientation = 'normal'  # 'normal', 'y', or 'yp'
-        
+
         self.move_count = 0
     
     def __enter__(self):
         self.connect()
         return self
     
-    def __exit__(self, *args):
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        if exc_type is not None:
+            robot_state.invalidate()
         self.close()
+        return False  # don't suppress exceptions
     
     def connect(self):
         self._log("Connecting...")
         self.ctrl = maestro.Controller(self.port)
         for ch in [0, 2, 6, 8]:
             self.ctrl.setAccel(ch, 110)
+        if self._needs_safe_startup:
+            self._safe_startup()
+            self._needs_safe_startup = False
+        else:
+            self._log("State restored — skipping safe startup.")
         self._log("Connected.")
     
     def close(self):
         if self.ctrl:
+            robot_state.save(self.gripper_pos, self.rp_status)
             self.ctrl.close()
             self.ctrl = None
     
@@ -173,6 +190,39 @@ class CubeController:
         if self.verbose:
             print(msg)
     
+    # ─── Safe Startup ───────────────────────────────────────────────────
+
+    def _safe_startup(self):
+        """
+        One-time reset when state is unknown (first run, power-on, or crash recovery).
+
+        Strategy:
+          1. Retract all RPs fast → max physical clearance between fingers
+          2. Move opposite pairs to B simultaneously (non-adjacent, can't collide):
+             - 0 & 6 (left/right) together
+             - 2 & 8 (top/bottom) together — safe once 0&6 are at B
+        """
+        self._log("State unknown — safe startup...")
+
+        # Step 1: Retract all RPs (fast) for maximum clearance
+        for rp in [1, 3, 7, 9]:
+            self.ctrl.setSpeed(rp, 0)
+            self.ctrl.setTarget(rp, RP_CAL[rp]['retracted'] * 4)
+            self.rp_status[rp] = 'retracted'
+        time.sleep(TIMING['rp_retract'])
+
+        # Step 2: Move left/right (non-adjacent) to B simultaneously
+        self._set_gripper(0, 'B')
+        self._set_gripper(6, 'B')
+        time.sleep(TIMING['gripper_move'] + 0.5)
+
+        # Step 3: Move top/bottom to B — 0&6 at B so any 2/8 position is now safe
+        self._set_gripper(2, 'B')
+        self._set_gripper(8, 'B')
+        time.sleep(TIMING['gripper_move'] + 0.5)
+
+        self._log("Safe startup complete.")
+
     # ─── Low-level Hardware ─────────────────────────────────────────────
     
     def _set_gripper(self, servo: int, pos: str):
