@@ -12,8 +12,9 @@ Load position:
 import sys
 import os
 import time
+from pathlib import Path
 
-sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+sys.path.insert(0, str(Path(__file__).parent.parent / 'src'))
 import maestro
 
 # Servo calibration values (updated 2026-03-07)
@@ -25,9 +26,9 @@ GRIPPER = {
 }
 
 RP = {
-    1: {"retracted": 1890, "hold": 1065},
+    1: {"retracted": 1890, "hold": 1055},
     3: {"retracted": 1815, "hold": 1100},
-    7: {"retracted": 1875, "hold": 1000},
+    7: {"retracted": 1875, "hold": 990},
     9: {"retracted": 1880, "hold": 1100},
 }
 
@@ -94,7 +95,7 @@ def main():
     # Engage all RP servos
     print("  Engaging all RP servos...")
     for rp in [1, 3, 7, 9]:
-        ctrl.setSpeed(rp, 50)  # slow engage
+        ctrl.setSpeed(rp, 30)  # slow engage
         ctrl.setTarget(rp, RP[rp]['hold'] * 4)
     time.sleep(2.0)
     
@@ -117,8 +118,8 @@ def main():
     
     # Re-engage 1 & 7, retract 3 & 9 for X rotation
     print("  Re-engaging RP 1 & 7...")
-    ctrl.setSpeed(1, 50)
-    ctrl.setSpeed(7, 50)
+    ctrl.setSpeed(1, 30)
+    ctrl.setSpeed(7, 30)
     ctrl.setTarget(1, RP[1]['hold'] * 4)
     ctrl.setTarget(7, RP[7]['hold'] * 4)
     time.sleep(1.5)
