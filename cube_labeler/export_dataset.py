@@ -9,10 +9,19 @@ import shutil
 from pathlib import Path
 import random
 
-# Paths
-LABELS_DIR = Path('data/labels')
-IMAGES_DIR = Path('data/images')
-OUTPUT_DIR = Path('../training_data')
+# Paths — anchored to this file, not the working directory, so the script can be
+# run from anywhere in the repo.
+#
+# NOTE: this exporter only understands the *original* label scheme — scans
+# 001-008, whose labels live in cube_labeler/data/labels/scan_N.json and whose
+# images are flat files named scan_001_face_2_back.jpg. Scans 009+ collected by
+# collect_training_v2.py use a different layout (training_scans/scan_NNN/face_N.jpg
+# with labels in first_pass_labels.json) and are NOT exported yet.
+HERE = Path(__file__).parent
+REPO_ROOT = HERE.parent
+LABELS_DIR = HERE / 'data' / 'labels'
+IMAGES_DIR = HERE / 'data' / 'images'
+OUTPUT_DIR = REPO_ROOT / 'training_data'
 
 # YOLO class mapping
 CLASS_NAMES = ['W', 'Y', 'R', 'O', 'B', 'G']
@@ -86,7 +95,25 @@ def main():
         return
     
     print(f"📦 Found {len(label_files)} labeled scans")
-    
+
+    # The training images are gitignored, so a fresh clone has labels but no
+    # pixels. Fail here with a clear message rather than on the first shutil.copy.
+    if not IMAGES_DIR.is_dir():
+        print(f"❌ Image directory not found: {IMAGES_DIR}")
+        print("   Training images are not tracked in git — copy them from a")
+        print("   backup, or re-collect with src/collect_training_v2.py.")
+        return
+
+    missing = [
+        face['image']
+        for lf in label_files
+        for face in json.load(open(lf))['faces'].values()
+        if not (IMAGES_DIR / face['image']).exists()
+    ]
+    if missing:
+        print(f"❌ {len(missing)} referenced images are missing, e.g. {missing[:3]}")
+        return
+
     # Create output directories
     OUTPUT_DIR.mkdir(exist_ok=True)
     (OUTPUT_DIR / 'images' / 'train').mkdir(parents=True, exist_ok=True)
