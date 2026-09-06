@@ -51,7 +51,7 @@ SETTLE_THRESHOLD = 40  # ~10μs tolerance
 # ─── Helpers ────────────────────────────────────────────────────────────────
 
 class TimingCalibrator:
-    def __init__(self, port='/dev/ttyACM0'):
+    def __init__(self, port=None):
         self.ctrl = maestro.Controller(port)
         self.results = {}
         
@@ -341,7 +341,7 @@ def main():
     parser = argparse.ArgumentParser(description="RCubed Timing Calibration")
     parser.add_argument('--quick', action='store_true', help='Quick calibration (key moves only)')
     parser.add_argument('--servo', type=int, help='Calibrate single servo')
-    parser.add_argument('--port', default='/dev/ttyACM0')
+    parser.add_argument('--port', default=None, help='Maestro port (default: autodetect)')
     args = parser.parse_args()
     
     cal = TimingCalibrator(args.port)

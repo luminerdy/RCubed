@@ -28,8 +28,6 @@ import kociemba
 # ─── Config ──────────────────────────────────────────────────────────────────
 
 SCAN_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "scans")
-MAESTRO_PORT = '/dev/ttyACM0'
-MAESTRO_PORT_ALT = '/dev/ttyACM1'
 
 # Cube region in camera image
 CUBE_BOUNDS = {'x1': 180, 'x2': 460, 'y1': 75, 'y2': 400}
@@ -72,11 +70,11 @@ def get_api_key():
 # ─── Maestro Port Detection ─────────────────────────────────────────────────
 
 def find_maestro_port():
-    """Find the Maestro serial port."""
-    for port in [MAESTRO_PORT, MAESTRO_PORT_ALT]:
-        if os.path.exists(port):
-            return port
-    print("❌ Maestro not found on ttyACM0 or ttyACM1!")
+    """Find the Maestro command port."""
+    port = maestro.find_port()
+    if os.path.exists(port):
+        return port
+    print("❌ Maestro not found — check `ls -l /dev/serial/by-id/`")
     sys.exit(1)
 
 # ─── Rotation Helpers ────────────────────────────────────────────────────────

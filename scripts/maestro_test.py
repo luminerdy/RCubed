@@ -103,26 +103,22 @@ def main():
     print("🎲 RCubed Maestro Connection Test")
     print("=" * 60)
     
-    # Try both possible device paths
-    device_paths = ['/dev/ttyACM0', '/dev/ttyACM1']
+    # Resolve the Maestro command port via its stable by-id name
     controller = None
-    
-    for device in device_paths:
-        try:
-            print(f"Trying {device}...")
-            controller = maestro.Controller(device)
-            print(f"✅ Connected to Maestro on {device}")
-            break
-        except Exception as e:
-            print(f"   {device} not available: {e}")
-            continue
+    device = maestro.find_port()
+    try:
+        print(f"Trying {device}...")
+        controller = maestro.Controller(device)
+        print(f"✅ Connected to Maestro on {device}")
+    except Exception as e:
+        print(f"   {device} not available: {e}")
     
     if controller is None:
         print("\n❌ Could not connect to Maestro")
         print("Check:")
         print("  - USB cable connected?")
         print("  - Maestro powered on?")
-        print("  - Run: ls -l /dev/ttyACM*")
+        print("  - Run: ls -l /dev/serial/by-id/")
         sys.exit(1)
     
     # Check if user wants to test all or specific channel

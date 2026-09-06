@@ -431,7 +431,7 @@ def main():
     args = parser.parse_args()
     
     print("Connecting to Maestro...")
-    ctrl = maestro.Controller('/dev/ttyACM0')
+    ctrl = maestro.Controller()
     
     print("Opening camera...")
     cam = cv2.VideoCapture(0)

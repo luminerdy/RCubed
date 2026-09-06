@@ -410,7 +410,7 @@ def scan(ctrl, cam):
 
 def main():
     print("Connecting...")
-    ctrl = maestro.Controller('/dev/ttyACM0')
+    ctrl = maestro.Controller()
     
     print("Opening camera...")
     cam = cv2.VideoCapture(0)

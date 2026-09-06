@@ -20,12 +20,8 @@ with open(REPO_ROOT / 'config' / 'servo_config.json', 'r') as f:
 robot_state.invalidate()
 
 # Connect to Maestro
-try:
-    controller = maestro.Controller('/dev/ttyACM0')
-    print("✅ Connected to Maestro")
-except:
-    controller = maestro.Controller('/dev/ttyACM1')
-    print("✅ Connected to Maestro on ACM1")
+controller = maestro.Controller()
+print(f"✅ Connected to Maestro on {controller.port}")
 
 print("\n⬅️  Retracting all grippers...")
 

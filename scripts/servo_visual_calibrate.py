@@ -87,17 +87,12 @@ class VisualCalibrator:
     def connect(self):
         """Connect to Maestro"""
         try:
-            self.controller = maestro.Controller('/dev/ttyACM0')
-            print("✅ Connected to Maestro on /dev/ttyACM0")
+            self.controller = maestro.Controller()
+            print(f"✅ Connected to Maestro on {self.controller.port}")
             return True
         except Exception as e:
-            try:
-                self.controller = maestro.Controller('/dev/ttyACM1')
-                print("✅ Connected to Maestro on /dev/ttyACM1")
-                return True
-            except:
-                print(f"❌ Failed to connect: {e}")
-                return False
+            print(f"❌ Failed to connect: {e}")
+            return False
     
     def move_and_show(self, channel, position, description=""):
         """Move servo and capture photo"""

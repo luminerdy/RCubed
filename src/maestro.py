@@ -1,5 +1,28 @@
+import glob
+import os
 import serial
 from sys import version_info
+
+
+# In "USB Dual Port" mode the Maestro exposes two serial interfaces: interface
+# 00 is the Command Port (what this library speaks to) and interface 02 is the
+# TTL Serial Port. The ttyACM* numbers are assigned in USB enumeration order and
+# shift when other serial devices are attached, so opening ttyACM1 as a
+# "fallback" can silently land on the TTL port instead. Resolve the command port
+# by its stable by-id name.
+COMMAND_PORT_GLOB = '/dev/serial/by-id/usb-Pololu*-if00'
+
+
+def find_port():
+    """Return the device path of the Maestro's command port.
+
+    Falls back to /dev/ttyACM0 when the by-id symlinks aren't available.
+    """
+    matches = sorted(glob.glob(COMMAND_PORT_GLOB))
+    if matches:
+        return os.path.realpath(matches[0])
+    return '/dev/ttyACM0'
+
 
 PY2 = version_info[0] == 2   #Running Python 2.x?
 
@@ -28,8 +51,11 @@ class Controller:
     # assumes.  If two or more controllers are connected to different serial
     # ports, or you are using a Windows OS, you can provide the tty port.  For
     # example, '/dev/ttyACM2' or for Windows, something like 'COM3'.
-    def __init__(self,ttyStr='/dev/ttyACM0',device=0x0c):
-        # Open the command port
+    def __init__(self,ttyStr=None,device=0x0c):
+        # Open the command port (autodetected when not given explicitly)
+        if ttyStr is None:
+            ttyStr = find_port()
+        self.port = ttyStr
         self.usb = serial.Serial(ttyStr)
         # Command lead-in and device number are sent for each Pololu serial command.
         self.PololuCmd = chr(0xaa) + chr(device)

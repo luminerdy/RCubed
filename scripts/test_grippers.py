@@ -41,7 +41,7 @@ def main():
     robot_state.invalidate()
 
     print("Connecting to Maestro...")
-    ctrl = maestro.Controller('/dev/ttyACM0')
+    ctrl = maestro.Controller()
     
     # Set gripper acceleration
     for ch in [0, 2, 6, 8]:

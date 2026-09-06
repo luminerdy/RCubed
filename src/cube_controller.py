@@ -136,7 +136,7 @@ class CubeController:
     F/B moves handled by rotating cube to use R gripper.
     """
     
-    def __init__(self, port: str = '/dev/ttyACM0', verbose: bool = True):
+    def __init__(self, port: Optional[str] = None, verbose: bool = True):
         self.port = port
         self.verbose = verbose
         self.ctrl: Optional[maestro.Controller] = None
@@ -171,6 +171,7 @@ class CubeController:
     def connect(self):
         self._log("Connecting...")
         self.ctrl = maestro.Controller(self.port)
+        self.port = self.ctrl.port
         for ch in [0, 2, 6, 8]:
             self.ctrl.setAccel(ch, 110)
         if self._needs_safe_startup:
@@ -697,7 +698,7 @@ def main():
     import argparse
     parser = argparse.ArgumentParser(description="RCubed Cube Controller")
     parser.add_argument('moves', nargs='*', help='Moves or solution string')
-    parser.add_argument('--port', default='/dev/ttyACM0')
+    parser.add_argument('--port', default=None, help='Maestro port (default: autodetect)')
     args = parser.parse_args()
     
     if not args.moves:

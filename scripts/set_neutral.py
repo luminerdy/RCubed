@@ -10,12 +10,8 @@ import maestro
 import time
 
 # Connect to Maestro
-try:
-    controller = maestro.Controller('/dev/ttyACM0')
-    print("✅ Connected to Maestro")
-except:
-    controller = maestro.Controller('/dev/ttyACM1')
-    print("✅ Connected to Maestro on ACM1")
+controller = maestro.Controller()
+print(f"✅ Connected to Maestro on {controller.port}")
 
 # Set all active servos to center (6000)
 servos = [0, 1, 2, 3, 6, 7, 8, 9]
