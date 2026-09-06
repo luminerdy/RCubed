@@ -10,19 +10,24 @@ A Raspberry Pi 5 robot that physically solves a Rubik's cube. Uses DS3218 servos
 - **RubikPi agent workspace:** `/home/pi5rcube/RCubed/` (identity, memory, project docs)
 
 ## Hardware
-- Pololu Maestro servo controller → `/dev/ttyACM0` (may be ttyACM1 after USB replug)
+- Pololu Maestro servo controller — port resolved by `maestro.find_port()` via
+  `/dev/serial/by-id/usb-Pololu*-if00` (the command port). Never hardcode
+  `ttyACM1`; that's the TTL port and commands there go nowhere.
 - Maestro uses quarter-microseconds (multiply μs × 4)
 - 8× DS3218 servos: grippers 0,2,6,8 (rotate faces) + RP servos 1,3,7,9 (grip/retract)
 - USB camera, front-facing
 - Blue LED lighting (causes W/Y color confusion — manual verification needed)
 
-## Setup Status (2026-05-05)
+## Setup Status (2026-09-05)
 - ✅ dialout group: already set
 - ✅ Repo cloned to ~/rcubed
-- ✅ Dependencies installed: pyserial, opencv-python, kociemba, anthropic, flask, numpy
-- ⚠️ Maestro: not yet connected/tested on this reflashed Pi
-- ⚠️ ANTHROPIC_API_KEY: needs to be set in ~/.bashrc
+- ✅ Dependencies installed (see requirements.txt) — all six import cleanly
+- ✅ Maestro detected on USB (Mini Maestro 12-Channel, serial 00490905)
+- ✅ USB webcam detected (SunplusIT 4bcf:4c10) on /dev/video0
+- ⚠️ ANTHROPIC_API_KEY: still not set in ~/.bashrc — auto_solve.py can't run
+- ⚠️ Nothing has been run on hardware since the reflash (no config/robot_state.json)
 - ⚠️ Camera white balance: run after each camera reconnect
+- ❌ training_scans/ absent — labels are in git, images are not
 
 ## Key Commands
 ```bash
@@ -72,9 +77,11 @@ Orange (L) ← White (F) → Red (R)
 - `src/auto_solve.py` needs update to use CubeController (currently uses old move_executor logic)
 
 ## What's Next
-1. Plug in Maestro → test with `scripts/retract_all.py`
+See `docs/ACTION-PLAN.md` — Phase 0 (validate on hardware) is the current blocker.
+1. `scripts/retract_all.py` → `scripts/test_grippers.py`, confirm robot_state.json appears
 2. Set ANTHROPIC_API_KEY in ~/.bashrc
 3. Run `scripts/calibrate_timing.py` to optimize servo speeds
-4. Collect more training scans (at 8/100+ needed for local YOLOv8 model)
-5. Update auto_solve.py to use CubeController
+4. Restore or re-collect training scans (images are not in git)
+5. Update auto_solve.py to use CubeController — it still shells out to the
+   deleted `move_executor.py`, so it is currently broken
 6. Build unified Pipeline class (scan → solve → execute)
