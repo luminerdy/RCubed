@@ -1,0 +1,14 @@
+# RCubed runtime dependencies
+#
+# On Raspberry Pi OS Bookworm, system pip is externally managed:
+#   pip3 install --break-system-packages -r requirements.txt
+#
+# Lower bounds are the versions verified working on the Pi 5 (2026-09-05).
+# They are floors, not pins — newer releases have been fine so far.
+
+pyserial>=3.5           # Maestro serial protocol
+opencv-python>=4.8      # camera capture + image cropping
+numpy>=1.24             # array ops (pulled in by opencv anyway)
+kociemba>=1.2.1         # two-phase cube solver
+anthropic>=0.99         # vision-based color detection (until YOLOv8 lands)
+flask>=3.0              # cube_labeler web UI
