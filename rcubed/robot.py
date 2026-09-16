@@ -35,10 +35,12 @@ def positions_swept(frm: str, to: str) -> set[str]:
 
 
 class Robot:
-    def __init__(self, backend: Backend, cfg: RobotConfig, state_file: Path = STATE_FILE):
+    def __init__(self, backend: Backend, cfg: RobotConfig, state_file: Path | None = STATE_FILE):
+        """`state_file=None` disables persistence (simulation must never write the
+        real robot's state file)."""
         self.backend = backend
         self.cfg = cfg
-        self.state_file = Path(state_file)
+        self.state_file = Path(state_file) if state_file else None
         self.gripper: dict[int, str | None] = {g: None for g in GRIPPERS}
         self.rp: dict[int, str | None] = {r: None for r in RPS}
 
@@ -124,7 +126,7 @@ class Robot:
             return None  # not Linux; skip the reboot check
 
     def save_state(self) -> None:
-        if not self.state_known:
+        if self.state_file is None or not self.state_known:
             return
         data = {
             "clean": True,
@@ -137,6 +139,8 @@ class Robot:
 
     def load_state(self) -> bool:
         """Restore a clean state written since the last boot. Returns success."""
+        if self.state_file is None:
+            return False
         try:
             data = json.loads(self.state_file.read_text())
         except (OSError, ValueError):
@@ -156,6 +160,8 @@ class Robot:
         return True
 
     def invalidate_state(self) -> None:
+        if self.state_file is None:
+            return
         try:
             data = json.loads(self.state_file.read_text())
             data["clean"] = False

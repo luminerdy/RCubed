@@ -27,12 +27,13 @@ def open_robot(args) -> tuple[Robot, Choreographer]:
     cfg = RobotConfig.load(args.config)
     if args.sim:
         backend = SimBackend(realtime=args.realtime, echo=args.verbose)
+        robot = Robot(backend, cfg, state_file=None)  # never touch the real state file
     else:
         backend = MaestroBackend(args.port)
         print(f"Maestro on {backend.port}")
-    robot = Robot(backend, cfg)
-    if not args.sim and robot.load_state():
-        print("state restored:", robot.describe())
+        robot = Robot(backend, cfg)
+        if robot.load_state():
+            print("state restored:", robot.describe())
     return robot, Choreographer(robot, cfg)
 
 

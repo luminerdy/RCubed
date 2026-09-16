@@ -78,6 +78,16 @@ def test_state_roundtrip(rig, cfg, tmp_path):
     assert not r3.load_state()
 
 
+def test_no_state_file_means_no_persistence(cfg, tmp_path, monkeypatch):
+    monkeypatch.chdir(tmp_path)
+    robot = Robot(SimBackend(), cfg, state_file=None)
+    Choreographer(robot, cfg).safe_startup()
+    robot.save_state()
+    robot.invalidate_state()
+    assert not list(tmp_path.iterdir())
+    assert not robot.load_state()
+
+
 # ── choreography ─────────────────────────────────────────────────────────
 
 def test_safe_startup_ends_all_b_released(rig):
