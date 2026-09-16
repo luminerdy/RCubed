@@ -1,0 +1,69 @@
+{
+  "_comment": [
+    "Single source of truth for servo calibration, speeds and timing.",
+    "All pulse widths are in microseconds; the code converts to the Maestro's quarter-microseconds.",
+    "Gripper positions A/B/C/D are ~90 degrees apart. B is neutral. From B: C = 90 CW, A = 90 CCW, D = 180 (CW from the face's own perspective).",
+    "Calibration values below were verified on hardware 2026-04-03 (no mechanical changes since)."
+  ],
+
+  "grippers": {
+    "0": {"face": "L", "rp": 1, "A": 400, "B": 1100, "C": 1785, "D": 2420},
+    "2": {"face": "U", "rp": 3, "A": 400, "B": 1040, "C": 1710, "D": 2400},
+    "6": {"face": "R", "rp": 7, "A": 475, "B": 1120, "C": 1800, "D": 2425},
+    "8": {"face": "D", "rp": 9, "A": 450, "B": 1120, "C": 1810, "D": 2425}
+  },
+
+  "rp": {
+    "1": {"retracted": 1890, "hold": 1055},
+    "3": {"retracted": 1815, "hold": 1100},
+    "7": {"retracted": 1875, "hold": 990},
+    "9": {"retracted": 1880, "hold": 1100}
+  },
+
+  "turn": {"cw": "C", "ccw": "A", "180": "D"},
+
+  "rotations": {
+    "_comment": [
+      "Whole-cube rotations in standard notation. y: R->F (spin like U). x: F->U (tumble like R).",
+      "Servo mapping inferred from legacy/docs/RULES.md (verified 2026-03-31):",
+      "  2:B->C, 8:B->A  moves R->F  (= y)      2:B->A, 8:B->C  moves L->F  (= y')",
+      "  0:B->C, 6:B->A  moves U->F  (= x')     0:B->A, 6:B->C  moves D->F  (= x)",
+      "Confirm on hardware; flip the letters here if the cube goes the other way."
+    ],
+    "y":  {"2": "C", "8": "A"},
+    "y'": {"2": "A", "8": "C"},
+    "x":  {"0": "A", "6": "C"},
+    "x'": {"0": "C", "6": "A"},
+    "half_turn_by_toggle": {"y": true, "x": false}
+  },
+
+  "load_position": {"0": "B", "2": "C", "6": "B", "8": "A"},
+
+  "speeds": {
+    "_comment": "Maestro speed units: 0 = unlimited. Accel 0-255, 0 = unlimited.",
+    "gripper_accel": 110,
+    "rp_engage": 30,
+    "rp_retract": 0,
+    "x_rotation": {"0": 60, "6": 45}
+  },
+
+  "timing": {
+    "_comment": "Seconds to wait after commanding a move. Open-loop; tune with calibration later.",
+    "gripper_move": 0.8,
+    "rp_engage": 2.0,
+    "rp_retract": 2.0,
+    "turn_90": 1.2,
+    "turn_180": 2.0,
+    "x_rotation": 2.5,
+    "y_rotation": 2.0,
+    "half_rotation": 2.5,
+    "settle_poll_timeout": 3.0
+  },
+
+  "camera": {
+    "index": 0,
+    "width": 640,
+    "height": 480,
+    "crop": [180, 75, 460, 400]
+  }
+}

@@ -1,132 +1,71 @@
-# RCubed - Rubik's Cube Solving Robot
+# RCubed
 
-A Raspberry Pi-powered robot that solves Rubik's cubes using computer vision and the Kociemba algorithm.
+A Rubik's cube solving robot: RCR3D mechanics (O.T. Vinta), eight DS3218 servos on a
+Pololu Mini Maestro, a USB webcam, and a Raspberry Pi 5. Everything runs locally in
+Python. No cloud, no LLM.
 
-## Hardware
+**Status (Sept 2026):** restarted from a clean base. The previous code is preserved under
+[`legacy/`](legacy/) and at tag `v0-legacy`. See [docs/PLAN.md](docs/PLAN.md) for the
+phases and [docs/HARDWARE.md](docs/HARDWARE.md) for the mechanics.
 
-- **Raspberry Pi 5** (16GB) with Hailo-8 AI accelerator
-- **4 DS3218 servos** (270°) for gripper rotation
-- **4 DS3218 servos** for rack-and-pinion grip/release
-- **Pololu Maestro** servo controller
-- **Camera** for cube scanning
-- Based on [RCR3D design](https://rcr3d.com) by O.T. Vinta
+## Layout
 
-## Quick Start
+```
+rcubed/            the package
+  config.py        loads config/robot.json (the only place calibration lives)
+  maestro.py       Pololu serial protocol
+  backends.py      MaestroBackend (real) / SimBackend (no hardware)
+  robot.py         servo primitives, collision guard, persisted state
+  choreography.py  face turns and whole-cube rotations
+  cube_model.py    54-facelet cube model (tracking + tests)
+  solver.py        Kociemba wrapper
+  cli.py           python -m rcubed ...
+config/robot.json  servo calibration, speeds, timing, camera crop
+tests/             runs anywhere; the simulator stands in for the robot
+legacy/            the pre-restart code and docs, for reference only
+```
+
+## Setup
+
+On the Pi (or any machine, for simulation):
 
 ```bash
-# Test gripper movements
-python3 scripts/test_grippers.py
-
-# Run timing calibration
-python3 scripts/calibrate_timing.py
-
-# Execute a solution
-python3 src/cube_controller.py "R U R' F2"
-
-# Scan cube faces
-python3 src/scan_v7.py
+git clone https://github.com/luminerdy/RCubed rcubed && cd rcubed
+pip3 install --break-system-packages -r requirements.txt
+python3 -m pytest -q
 ```
 
-## Project Structure
+The Maestro must be in *USB Dual Port* mode and your user in the `dialout` group. The
+command port is found automatically via `/dev/serial/by-id`.
 
-```
-rcubed/
-├── src/                    # Main application code
-│   ├── cube_controller.py  # Robot control (standard cube notation)
-│   ├── scan_v7.py          # 6-face scanning sequence
-│   ├── solve_cube.py       # Kociemba solver integration
-│   ├── auto_solve.py       # Full pipeline (needs update)
-│   ├── collect_training_v2.py
-│   └── maestro.py          # Servo library
-├── scripts/                # Utilities
-│   ├── calibrate_timing.py # Measure actual servo times
-│   ├── servo_calibrate.py  # Interactive calibration
-│   ├── camera_adjust.py    # Camera setup
-│   ├── test_grippers.py    # Gripper testing
-│   ├── retract_all.py      # Safety reset
-│   └── set_neutral.py      # Reset servos
-├── cube_labeler/           # Flask app for labeling training data
-├── config/                 # servo_config.json
-├── docs/                   # Documentation
-│   ├── CUBE-CONTROLLER.md  # Controller API
-│   ├── RULES.md            # Rotation mechanics
-│   ├── BRAINSTORM.md       # Project roadmap
-│   └── ...
-└── training_scans/         # Training images (not in git)
+## Driving the robot
+
+```bash
+python3 -m rcubed status                  # remembered servo state
+python3 -m rcubed safe-start              # from unknown state to all-B, released
+python3 -m rcubed load                    # fingers clear; insert cube white front, blue top
+python3 -m rcubed grip                    # engage all four grippers
+python3 -m rcubed move "R U R' U'"        # standard notation; F/B handled automatically
+python3 -m rcubed release
+python3 -m rcubed retract                 # EMERGENCY: release everything, forget state
 ```
 
-## Cube Controller
+Add `--sim` to any command to run it against the simulator instead (prints a command
+trace with `-v`, and the time the robot would have taken):
 
-Standard cube notation with automatic F/B handling:
-
-```python
-from cube_controller import CubeController
-
-with CubeController() as cube:
-    cube.R()              # Right CW
-    cube.Rp()             # Right CCW (prime)
-    cube.R2()             # Right 180°
-    cube.F()              # Front (auto-rotates cube)
-    cube.execute("R U R' F2")  # Full solution
+```bash
+python3 -m rcubed --sim -v move "F2 B' L"
 ```
 
-See [docs/CUBE-CONTROLLER.md](docs/CUBE-CONTROLLER.md) for full API.
+Ctrl-C during a move retracts all grippers and marks the state unknown, so the next
+run starts with a safe startup.
 
-## Progress
+## Hardware notes
 
-### Completed ✅
-- Hardware built and calibrated
-- 6-face scanning sequence (scan_v7.py)
-- Kociemba solver integrated
-- Modular controller with standard notation
-- Successful solves (2, 8, and 20-move solutions)
-- Training data collection system
-- Web labeler with validation
+- Grippers on channels 0 (L), 2 (U), 6 (R), 8 (D); their rack-and-pinion servos on 1, 3, 7, 9.
+- Gripper positions A/B/C/D are 90° apart; B is neutral. From B: C = 90° CW, A = 90° CCW, D = 180°.
+- There is no gripper on F or B. Those faces are turned by spinning the cube (y) so they reach R.
+- A finger may sit at A or C only while both neighbouring fingers are at B or D. The
+  `Robot` class enforces this and refuses moves that would violate it.
 
-### In Progress 🔄
-- Timing calibration for speed optimization
-- Training data collection (8 scans, need 100+)
-- YOLOv8 color detection model
-
-### Planned ⏳
-- Hailo-8 deployment
-- Full autonomous pipeline
-- Error recovery
-
-## Servo Calibration
-
-### Gripper Servos (0, 2, 6, 8)
-| Servo | A | B | C | D |
-|-------|-----|------|------|------|
-| 0 | 400 | 1100 | 1785 | 2420 |
-| 2 | 400 | 1040 | 1710 | 2400 |
-| 6 | 475 | 1120 | 1800 | 2425 |
-| 8 | 450 | 1120 | 1810 | 2425 |
-
-### RP Servos (1, 3, 7, 9)
-| Servo | Retracted | Hold |
-|-------|-----------|------|
-| 1 | 1890 | 1055 |
-| 3 | 1815 | 1100 |
-| 7 | 1875 | 990 |
-| 9 | 1880 | 1100 |
-
-## Standard Cube Orientation
-
-```
-        Blue (U)
-           ↑
-Orange (L) ← White (F) → Red (R)
-           ↓
-        Green (D)
-        
-    Yellow (B) = behind
-```
-
-## License
-
-MIT
-
-## Author
-
-Scotty (luminerdy)
+Calibration numbers live only in `config/robot.json`. Change them there, nowhere else.

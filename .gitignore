@@ -1,23 +1,36 @@
-# Training data (too large for git)
+# Runtime state (per-machine, per-boot)
+config/robot_state.json
+
+# Captured images and datasets (too large for git; keep a backup elsewhere)
+data/
+scans/
 training_scans/
 training_scans_backup_*/
-
-# Temporary files
-tmp/
 *.jpg
+*.jpeg
 *.png
 *.log
+
+# Trained models: commit only deliberately, by name
+models/*.pkl
+models/*.onnx
+models/*.pt
 
 # Python
 __pycache__/
 *.pyc
 *.pyo
+.pytest_cache/
+*.egg-info/
+build/
+dist/
 .env
 venv/
+.venv/
 
-# IDE
+# IDE / OS
 .vscode/
 .idea/
-
-# Backups
+.DS_Store
+tmp/
 *.bak

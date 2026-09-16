@@ -1,0 +1,24 @@
+[project]
+name = "rcubed"
+version = "2.0.0-dev"
+description = "Rubik's cube solving robot: RCR3D mechanics, Pololu Maestro, Raspberry Pi 5"
+requires-python = ">=3.11"
+license = {text = "MIT"}
+dependencies = [
+    "pyserial>=3.5",
+    "numpy>=1.24",
+    "opencv-python>=4.8",
+    "kociemba>=1.2.1",
+]
+
+[project.optional-dependencies]
+dev = ["pytest>=7"]
+
+[project.scripts]
+rcubed = "rcubed.cli:main"
+
+[tool.setuptools.packages.find]
+include = ["rcubed*"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
