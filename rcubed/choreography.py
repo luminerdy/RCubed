@@ -132,10 +132,23 @@ class Choreographer:
             self.engage(g)
 
     def prepare_for_turn(self) -> None:
-        """All four holding, all four at B."""
+        """All four holding, all four at B.
+
+        Grippers are reset in opposite pairs: while left/right hold the cube,
+        top/bottom release together, swing to B together and re-engage
+        together (and vice versa). An opposite pair holds the cube on its own,
+        so this halves the reset time compared with one gripper at a time."""
         self.engage_all()
-        for g in GRIPPERS:
-            self.reset_gripper(g)
+        for pair in ((2, 8), (0, 6)):
+            off_b = [g for g in pair if self.robot.gripper[g] != "B"]
+            if not off_b:
+                continue
+            other = tuple(g for g in GRIPPERS if g not in pair)
+            self.transfer_hold(other)  # other pair holds; this pair releases together
+            for g in off_b:
+                self.robot.set_gripper(g, "B")
+            self.robot.settle(self.cfg.t("gripper_move"))
+            self.engage(*pair)
 
     # ── physical primitives ─────────────────────────────────────────────
     def turn(self, g: int, direction: str) -> None:

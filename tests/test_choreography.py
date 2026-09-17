@@ -133,6 +133,28 @@ def test_single_turn_sequence(rig, cfg):
     assert cfg.gripper_us(6, "C") in [us for _, us in targets]
 
 
+def test_pre_turn_reset_moves_opposite_pair_together(rig, cfg):
+    """From the load pose (2 at C, 8 at A) a turn must reset 2 and 8 as a pair:
+    arms 3 and 9 retract back-to-back, then both fingers move, then both engage."""
+    backend, robot, ch = rig
+    ch.load_position()
+    ch.engage_all()
+    start = len(backend.log)
+    ch.move("R")
+    log = [e for e in backend.log[start:] if e[0] == "target"]
+    rp3_off = cfg.rp_us(3, "retracted")
+    rp9_off = cfg.rp_us(9, "retracted")
+    i3 = next(i for i, e in enumerate(log) if e[1] == 3 and e[2] == rp3_off)
+    i9 = next(i for i, e in enumerate(log) if e[1] == 9 and e[2] == rp9_off)
+    assert abs(i3 - i9) == 1  # released together, no move in between
+    b2 = next(i for i, e in enumerate(log) if e[1] == 2 and e[2] == cfg.gripper_us(2, "B"))
+    b8 = next(i for i, e in enumerate(log) if e[1] == 8 and e[2] == cfg.gripper_us(8, "B"))
+    assert abs(b2 - b8) == 1  # swung to B together
+    assert ch.model == CubeModel().apply("R")
+    assert all(robot.gripper[g] == "B" for g in GRIPPERS)
+    assert len(robot.holding()) == 4
+
+
 def test_front_move_rotates_then_turns_r_gripper(rig):
     _, robot, ch = rig
     ch.safe_startup()
