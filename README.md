@@ -6,7 +6,8 @@ Python. No cloud, no LLM.
 
 **Status (Sept 2026):** restarted from a clean base. The previous code is preserved under
 [`legacy/`](legacy/) and at tag `v0-legacy`. See [docs/PLAN.md](docs/PLAN.md) for the
-phases and [docs/HARDWARE.md](docs/HARDWARE.md) for the mechanics.
+phases, [docs/HARDWARE.md](docs/HARDWARE.md) for the mechanics, and
+[docs/MOVES.md](docs/MOVES.md) for every `move` token.
 
 ## Layout
 
