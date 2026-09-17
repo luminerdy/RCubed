@@ -17,10 +17,12 @@ it, and do not port its bugs. `legacy/CLAUDE.md` describes that old world, not t
 
 ## Current status (update this line when it changes)
 
-Phase 2 (robot layer) is code-complete and passes in the simulator. Next: hardware
-acceptance on the Pi, steps 1–5 in `docs/PLAN.md` §2, starting with **no cube** in the
-robot. Phase 3 (scanner) has not started. Open housekeeping: revoke the old GitHub token
-and delete `~/github.txt` / `~/RootPW.txt` on the Pi.
+Phase 2 (robot layer) is done and verified on the robot (2026-09-17): all 18 face
+moves, x/y rotations, pair resets. Next: Phase 3, the scanner (`docs/PLAN.md` §3).
+Lighting decision pending: an addressable RGBW NeoPixel ring (Adafruit 2863) is being
+considered instead of a plain ring light, so the scanner should take a configurable list
+of lighting states per face. Open housekeeping: revoke the old GitHub token and delete
+`~/github.txt` / `~/RootPW.txt` on the Pi.
 
 ## Where things run
 
