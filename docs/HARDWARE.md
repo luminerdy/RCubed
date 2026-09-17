@@ -1,8 +1,7 @@
 # Hardware reference
 
-Distilled from `legacy/docs/RULES.md` and the working code, keeping only what was
-verified on the robot (March–April 2026). Anything marked *confirm* has not been
-re-checked since the restart.
+Distilled from `legacy/docs/RULES.md` and the working code. Everything below was
+re-verified on the robot after the restart (2026-09-16/17) unless marked otherwise.
 
 ## Physical layout
 
@@ -56,9 +55,8 @@ Numbers: `config/robot.json`. They match the values verified 2026-04-03.
 | `x`  | F → U | 0: B→A, 6: B→C | RPs 1 & 7 | RPs 3 & 9 |
 | `x'` | U → F | 0: B→C, 6: B→A | RPs 1 & 7 | RPs 3 & 9 |
 
-- The mapping of `x`/`x'` to servo letters is inferred from the legacy notes
-  (0:B→C, 6:B→A was verified to bring the top face to the front). *Confirm* on hardware;
-  flip the letters in `config/robot.json → rotations` if the cube goes the other way.
+- All four rotations and all 18 face moves (including F/B via a spin) were verified on
+  the robot on 2026-09-17 with a solved cube.
 - `y2` can be done by toggling 2 and 8 between A and C (verified in the old scan sequence).
   `x2` is done as two `x` moves with a reset between them.
 - x rotations run with speed limits (servo 0 = 60, servo 6 = 45) so the two servos stay in sync.

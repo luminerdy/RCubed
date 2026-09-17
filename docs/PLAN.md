@@ -22,10 +22,13 @@ plain Python that runs on the Pi with no network. Nothing depends on an LLM.
 - **Still yours:** revoke that GitHub token in GitHub settings and delete `~/github.txt`
   and `~/RootPW.txt` on the Pi.
 
-### 2. Robot layer — code done, hardware check pending
+### 2. Robot layer — done
 `rcubed/robot.py`, `choreography.py`, `cube_model.py`, tests, simulator, CLI.
 
-Hardware acceptance, in order, with **no cube** in the robot first:
+Verified on the robot 2026-09-16/17: safe startup, load pose, all 18 face moves
+(quarter, prime and half on every face, F/B via spin), `y`/`y'`/`x`/`x'`, pair resets.
+
+The acceptance steps that were used, for reference:
 1. `python3 -m rcubed safe-start` — fingers end at B, all released, no contact.
 2. `python3 -m rcubed load` — 2 goes to C, 8 to A.
 3. With a **solved** cube inserted: `grip`, then `move "R"`, check the right face turned

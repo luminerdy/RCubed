@@ -25,10 +25,9 @@
   "rotations": {
     "_comment": [
       "Whole-cube rotations in standard notation. y: R->F (spin like U). x: F->U (tumble like R).",
-      "Servo mapping inferred from legacy/docs/RULES.md (verified 2026-03-31):",
+"Servo mapping verified on hardware 2026-09-17:",
       "  2:B->C, 8:B->A  moves R->F  (= y)      2:B->A, 8:B->C  moves L->F  (= y')",
-      "  0:B->C, 6:B->A  moves U->F  (= x')     0:B->A, 6:B->C  moves D->F  (= x)",
-      "Confirm on hardware; flip the letters here if the cube goes the other way."
+      "  0:B->C, 6:B->A  moves U->F  (= x')     0:B->A, 6:B->C  moves D->F  (= x)"
     ],
     "y":  {"2": "C", "8": "A"},
     "y'": {"2": "A", "8": "C"},

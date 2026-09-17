@@ -73,9 +73,7 @@ Never part of a solution. Useful for testing, and the scanner uses them between 
 | `x2` | half tumble | two `x` moves with a reset between |
 | `z` | not available: the robot cannot do it | rejected with an error |
 
-Verified on hardware 2026-09-16: `y` brings red (right) to the front. The `x` direction is
-still to be confirmed; if white goes to the bottom instead of the top, swap the letters
-under `rotations` in `config/robot.json`.
+Verified on hardware 2026-09-17: all 18 face moves, `y`, `y'`, `x` and `x'`.
 
 ## What every `move` does around the tokens
 
