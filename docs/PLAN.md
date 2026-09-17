@@ -63,6 +63,11 @@ Hardware acceptance, in order, with **no cube** in the robot first:
 - Ten consecutive solves on different scrambles without intervention.
 
 ### 6. Later, optional
+- **Lazy resets.** Do not return a gripper to B after every turn; turn from wherever
+  it is parked. Half turns never need a reset (A↔C, B↔D). Quarter turns only need
+  one at the ends of the range (clockwise from D, counter-clockwise from A). A finger
+  parked at A or C still blocks its neighbours from turning to A or C, so the
+  collision guard decides when a reset is forced.
 - Replace fixed sleeps with position polling to speed up moves.
 - Timing calibration.
 - A physical start button.
