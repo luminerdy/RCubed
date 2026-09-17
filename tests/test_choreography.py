@@ -78,6 +78,22 @@ def test_state_roundtrip(rig, cfg, tmp_path):
     assert not r3.load_state()
 
 
+def test_cube_orientation_survives_between_runs(cfg, tmp_path):
+    state = tmp_path / "state.json"
+    r1 = Robot(SimBackend(), cfg, state_file=state)
+    c1 = Choreographer(r1, cfg)
+    c1.safe_startup()
+    c1.execute("R y", home=False)
+    r1.close()
+    r2 = Robot(SimBackend(), cfg, state_file=state)
+    assert r2.load_state()
+    c2 = Choreographer(r2, cfg)
+    assert c2.model == c1.model
+    assert c2.model.center("F") == "R"
+    c2.execute("U", home=True)  # U means the face on top in the *current* frame
+    assert c2.model == homed(CubeModel().apply("R y U"))
+
+
 def test_no_state_file_means_no_persistence(cfg, tmp_path, monkeypatch):
     monkeypatch.chdir(tmp_path)
     robot = Robot(SimBackend(), cfg, state_file=None)

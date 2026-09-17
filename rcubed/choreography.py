@@ -31,6 +31,8 @@ class Choreographer:
     def __init__(self, robot: Robot, cfg: RobotConfig, model: CubeModel | None = None):
         self.robot = robot
         self.cfg = cfg
+        if model is None and robot.extra.get("cube"):
+            model = CubeModel(robot.extra["cube"])  # orientation remembered from the last run
         self.model = model or CubeModel()
         # Orientation of the *notation frame*: face letters in a move sequence
         # refer to this frame. Explicit x/y tokens from the caller rotate it;
@@ -38,6 +40,11 @@ class Choreographer:
         self.frame = CubeModel(self.model.state)
         self.turns = 0
         self.rotations = 0
+        self._sync()
+
+    def _sync(self) -> None:
+        """Keep the cube model in the robot's persisted state."""
+        self.robot.extra["cube"] = self.model.state
 
     # ── RP management ───────────────────────────────────────────────────
     def engage(self, *grippers: int, slow: bool = True) -> None:
@@ -144,6 +151,7 @@ class Choreographer:
         self.engage(g)
         self.model.apply(face + SUFFIX[direction])
         self.turns += 1
+        self._sync()
 
     def _prep_rotation(self, axis: str) -> None:
         pair = ROTATION_PAIR[axis]
@@ -183,6 +191,7 @@ class Choreographer:
                 self._after_rotation(axis)
                 self.model.apply(rot)
                 self.rotations += 1
+                self._sync()
             else:
                 self.rotate(axis)
                 self.rotate(axis)
@@ -195,6 +204,7 @@ class Choreographer:
         self._after_rotation(axis)
         self.model.apply(rot)
         self.rotations += 1
+        self._sync()
 
     def _prep_rotation_keep(self, axis: str) -> None:
         """Like _prep_rotation but the pair stays at A/C (for a half turn by toggle)."""

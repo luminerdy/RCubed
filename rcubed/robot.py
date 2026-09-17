@@ -43,6 +43,9 @@ class Robot:
         self.state_file = Path(state_file) if state_file else None
         self.gripper: dict[int, str | None] = {g: None for g in GRIPPERS}
         self.rp: dict[int, str | None] = {r: None for r in RPS}
+        # Anything higher layers want persisted with the servo state
+        # (the choreographer stores the cube model here).
+        self.extra: dict = {}
 
     # ── state ───────────────────────────────────────────────────────────
     @property
@@ -133,6 +136,7 @@ class Robot:
             "timestamp": time.time(),
             "grippers": {str(g): p for g, p in self.gripper.items()},
             "rp": {str(r): s for r, s in self.rp.items()},
+            "extra": self.extra,
         }
         self.state_file.parent.mkdir(parents=True, exist_ok=True)
         self.state_file.write_text(json.dumps(data, indent=2))
@@ -153,6 +157,7 @@ class Robot:
         try:
             self.gripper = {g: data["grippers"][str(g)] for g in GRIPPERS}
             self.rp = {r: data["rp"][str(r)] for r in RPS}
+            self.extra = dict(data.get("extra", {}))
         except KeyError:
             self.gripper = {g: None for g in GRIPPERS}
             self.rp = {r: None for r in RPS}
