@@ -1,0 +1,171 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>RCubed Move Reference</title>
+<style>
+  :root {
+    --bg: #fbfaf7; --ink: #1f1d1a; --muted: #6b6560; --line: #e2ddd5;
+    --accent: #b5471f; --code-bg: #f1ede6; --head-bg: #f5f1ea;
+    --white:#f4f4f2; --yellow:#f2d53c; --red:#c8321f; --orange:#ef7d1a; --blue:#2657c4; --green:#2e9e46;
+  }
+  html { color-scheme: light; }
+  body { margin: 0; background: var(--bg); color: var(--ink); font: 16px/1.5 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
+  main { max-width: 900px; margin: 0 auto; padding: 32px 20px 64px; }
+  h1 { font-size: 1.9rem; margin: 0 0 4px; letter-spacing: -0.01em; }
+  .sub { color: var(--muted); margin: 0 0 28px; }
+  h2 { font-size: 1.25rem; margin: 40px 0 10px; padding-bottom: 6px; border-bottom: 2px solid var(--line); }
+  h3 { font-size: 1rem; margin: 22px 0 6px; }
+  p { margin: 8px 0; }
+  code, .tok { font-family: ui-monospace, Consolas, "SF Mono", Menlo, monospace; font-size: 0.93em; background: var(--code-bg); padding: 1px 6px; border-radius: 4px; }
+  pre { background: var(--code-bg); padding: 12px 14px; border-radius: 6px; overflow-x: auto; font-size: 0.9em; line-height: 1.45; }
+  pre code { background: none; padding: 0; }
+  table { border-collapse: collapse; width: 100%; margin: 10px 0 6px; font-size: 0.95em; }
+  th, td { text-align: left; padding: 8px 10px; border-bottom: 1px solid var(--line); vertical-align: top; }
+  th { background: var(--head-bg); font-weight: 600; }
+  td:first-child { white-space: nowrap; }
+  .wrap { overflow-x: auto; }
+  .note { border-left: 4px solid var(--accent); padding: 8px 14px; background: #fff6f1; margin: 14px 0; border-radius: 0 6px 6px 0; }
+  .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 16px; }
+  .card { border: 1px solid var(--line); border-radius: 8px; padding: 14px 16px; background: #fff; }
+  .card h3 { margin-top: 0; }
+  ol, ul { padding-left: 22px; }
+  li { margin: 4px 0; }
+  .layout { font-family: ui-monospace, Consolas, Menlo, monospace; white-space: pre; background: var(--code-bg); padding: 14px 18px; border-radius: 6px; display: inline-block; line-height: 1.5; font-size: 0.9em; }
+  .sw { display: inline-block; width: 0.9em; height: 0.9em; border-radius: 3px; vertical-align: -0.1em; border: 1px solid rgba(0,0,0,.15); margin-right: 4px; }
+  .muted { color: var(--muted); }
+  footer { margin-top: 48px; color: var(--muted); font-size: 0.85em; }
+</style>
+</head>
+<body>
+<main>
+  <h1>RCubed Move Reference</h1>
+  <p class="sub">Everything the <code>move</code> command accepts, and what the robot does for each token.</p>
+
+  <pre><code>python3 -m rcubed move "R U R' U'"          # several tokens, space separated
+python3 -m rcubed move --no-home "y"        # leave the cube rotated at the end
+python3 -m rcubed --sim -v move "F2 B'"     # simulate, print the servo trace</code></pre>
+
+  <h2>The robot</h2>
+  <div class="grid">
+    <div class="card">
+      <h3>Grippers, seen from the camera</h3>
+      <div class="layout">          camera
+            ↓
+        gripper 2   top     turns U   arm 3
+  gripper 0   ■   gripper 6
+    left            right
+   turns L         turns R
+   arm 1           arm 7
+        gripper 8   bottom  turns D   arm 9</div>
+      <p class="muted">Even channels rotate; the odd channel one higher is that gripper's rack-and-pinion arm. Front and back have no gripper.</p>
+    </div>
+    <div class="card">
+      <h3>Finger positions</h3>
+      <p>Each gripper has four positions about 90° apart: <code>A B C D</code>. <code>B</code> is neutral.</p>
+      <ul>
+        <li><code>B → C</code> 90° clockwise (as seen looking at that face)</li>
+        <li><code>B → A</code> 90° counter-clockwise</li>
+        <li><code>B → D</code> 180°</li>
+      </ul>
+      <p>Fingers at <code>A</code> or <code>C</code> are out of the camera's view; at <code>B</code> or <code>D</code> they are in it.</p>
+      <h3>Load orientation</h3>
+      <p><span class="sw" style="background:var(--white)"></span>white front &nbsp;
+         <span class="sw" style="background:var(--blue)"></span>blue top &nbsp;
+         <span class="sw" style="background:var(--red)"></span>red right<br>
+         <span class="sw" style="background:var(--orange)"></span>orange left &nbsp;
+         <span class="sw" style="background:var(--green)"></span>green bottom &nbsp;
+         <span class="sw" style="background:var(--yellow)"></span>yellow back</p>
+    </div>
+  </div>
+
+  <h2>Face turns</h2>
+  <p>These are what a solution is made of. Plain = 90° clockwise looking at that face, <code>'</code> = 90° counter-clockwise, <code>2</code> = 180°.</p>
+  <div class="wrap">
+  <table>
+    <tr><th>Tokens</th><th>Face</th><th>How the robot does it</th></tr>
+    <tr><td><span class="tok">U</span> <span class="tok">U'</span> <span class="tok">U2</span></td><td>top</td><td>gripper 2 turns B→C / B→A / B→D, then resets to B</td></tr>
+    <tr><td><span class="tok">D</span> <span class="tok">D'</span> <span class="tok">D2</span></td><td>bottom</td><td>gripper 8, same pattern</td></tr>
+    <tr><td><span class="tok">R</span> <span class="tok">R'</span> <span class="tok">R2</span></td><td>right</td><td>gripper 6, same pattern</td></tr>
+    <tr><td><span class="tok">L</span> <span class="tok">L'</span> <span class="tok">L2</span></td><td>left</td><td>gripper 0, same pattern</td></tr>
+    <tr><td><span class="tok">F</span> <span class="tok">F'</span> <span class="tok">F2</span></td><td>front</td><td>spins the cube <code>y'</code> so the front face reaches the right gripper, then gripper 6 turns</td></tr>
+    <tr><td><span class="tok">B</span> <span class="tok">B'</span> <span class="tok">B2</span></td><td>back</td><td>spins the cube <code>y</code> so the back face reaches the right gripper, then gripper 6 turns</td></tr>
+  </table>
+  </div>
+  <div class="note">
+    A face letter always means the face <em>currently at that position on the robot</em>, not a colour. After the cube has been rotated, <code>R</code> is whatever is on the right now. Consecutive <code>F</code> and <code>B</code> moves share one spin: after <code>y'</code> the front is at the right gripper and the back is at the left one.
+  </div>
+
+  <h3>One face turn, step by step</h3>
+  <ol>
+    <li>All four arms hold.</li>
+    <li>The turning gripper goes B→C, B→A or B→D. Wait for the turn to complete.</li>
+    <li>That gripper's arm retracts (fast). The other three keep holding.</li>
+    <li>The finger swings back to B.</li>
+    <li>The arm re-engages (slowly, so it does not shove the cube).</li>
+  </ol>
+
+  <h2>Whole-cube rotations</h2>
+  <p>Never part of a solution. Useful for testing, and the scanner uses them between photographs.</p>
+  <div class="wrap">
+  <table>
+    <tr><th>Token</th><th>Effect</th><th>Servos</th></tr>
+    <tr><td><span class="tok">y</span></td><td>spin like a U turn: the <b>right</b> face comes to the front</td><td>2 to C, 8 to A; top and bottom arms hold, left and right release</td></tr>
+    <tr><td><span class="tok">y'</span></td><td>the <b>left</b> face comes to the front</td><td>2 to A, 8 to C</td></tr>
+    <tr><td><span class="tok">y2</span></td><td>half spin: the <b>back</b> face comes to the front</td><td>toggles 2 and 8 between A and C</td></tr>
+    <tr><td><span class="tok">x</span></td><td>tumble like an R turn: the <b>front</b> face goes to the top</td><td>0 to A, 6 to C; left and right arms hold, top and bottom release</td></tr>
+    <tr><td><span class="tok">x'</span></td><td>the <b>top</b> face comes to the front</td><td>0 to C, 6 to A</td></tr>
+    <tr><td><span class="tok">x2</span></td><td>half tumble</td><td>two <code>x</code> moves with a reset between</td></tr>
+    <tr><td><span class="tok">z</span></td><td class="muted">not available: the robot cannot do it</td><td class="muted">rejected with an error</td></tr>
+  </table>
+  </div>
+  <p class="muted">Verified on hardware 2026-09-16: <code>y</code> brings red (right) to the front. The <code>x</code> direction is still to be confirmed; if white goes to the bottom instead of the top, swap the letters under <code>rotations</code> in <code>config/robot.json</code>.</p>
+
+  <h2>What every <code>move</code> does around the tokens</h2>
+  <ol>
+    <li>Restores the saved state from <code>config/robot_state.json</code>, or runs a safe startup if it is unknown (after a reboot, a crash, Ctrl-C or <code>retract</code>). <b>Safe startup releases all four arms</b>: hold the cube by hand if one is loaded.</li>
+    <li>Before each face turn: engages all arms and resets any parked fingers to B, in opposite pairs (top and bottom together while left and right hold, and vice versa).</li>
+    <li>After the last token, unless <code>--no-home</code>: spins the cube back to its starting orientation with the fewest x/y moves, resets all fingers to B, all four arms holding.</li>
+    <li>Prints the servo positions and where each face now sits, and saves the state.</li>
+  </ol>
+
+  <h2>Options</h2>
+  <div class="wrap">
+  <table>
+    <tr><th>Flag</th><th>Meaning</th></tr>
+    <tr><td><code>--no-home</code></td><td>Leave the cube in its final orientation instead of spinning it back. Face turns are never undone; this only concerns the orientation of the whole cube.</td></tr>
+    <tr><td><code>--sim</code></td><td>Run in the simulator, no hardware. Reports the time the robot would have taken.</td></tr>
+    <tr><td><code>-v</code></td><td>Verbose. With <code>--sim</code>, prints every servo command.</td></tr>
+    <tr><td><code>--port</code></td><td>Maestro command port, if auto-detection needs overriding.</td></tr>
+  </table>
+  </div>
+
+  <h2>Other commands</h2>
+  <div class="wrap">
+  <table>
+    <tr><th>Command</th><th>What it does</th></tr>
+    <tr><td><code>status</code></td><td>Show the remembered finger and arm positions and the cube's orientation. Moves nothing.</td></tr>
+    <tr><td><code>safe-start</code></td><td>From unknown positions to all fingers at B, all arms released, in a collision-free order. Releases the cube.</td></tr>
+    <tr><td><code>load</code></td><td>Loading pose: left and right at B, top at C, bottom at A, arms released. Insert the cube white front, blue top, red right.</td></tr>
+    <tr><td><code>grip</code></td><td>Engage all four arms slowly.</td></tr>
+    <tr><td><code>release</code></td><td>Retract all four arms.</td></tr>
+    <tr><td><code>retract</code></td><td><b>Emergency.</b> Retract everything at full speed and forget the state; the next command runs a safe startup.</td></tr>
+    <tr><td><code>servo &lt;ch&gt; &lt;us&gt;</code></td><td>Raw pulse width to one channel, for calibration only. Forgets the state.</td></tr>
+  </table>
+  </div>
+
+  <h2>Checklist with a solved cube</h2>
+  <ol>
+    <li><code>move "R"</code> then <code>move "R'"</code>: a red column appears on the right of the white face, then the cube is solved again. Repeat for U, L, D, then one <code>R2</code>.</li>
+    <li><code>move --no-home "y"</code>: red comes to the front. <code>move "y'"</code> undoes it.</li>
+    <li><code>move --no-home "x"</code>: white goes to the top. <code>move "x'"</code> undoes it.</li>
+    <li><code>move "F"</code> then <code>move "F'"</code>: spin, turn, spin home; cube solved again.</li>
+    <li><code>move "F R U R' U' F'"</code> twice: everything at once; must end solved.</li>
+  </ol>
+  <p>If step 1 turns the wrong way, swap <code>C</code> and <code>A</code> under <code>turn</code> in <code>config/robot.json</code>. If step 2 or 3 goes the wrong way, swap the letters under <code>rotations</code>. Calibration numbers live only in that file.</p>
+
+  <footer>RCubed · docs/moves.html · generated from the code in <code>rcubed/choreography.py</code> and <code>config/robot.json</code></footer>
+</main>
+</body>
+</html>
