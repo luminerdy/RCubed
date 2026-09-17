@@ -35,9 +35,9 @@ The acceptance steps that were used, for reference:
    clockwise as seen from the right. Same for `L`, `U`, `D`.
 4. `move "y"` with `--no-home`: confirm the red (right) face came to the front. Then `x`.
    If either goes the wrong way, flip the letters in `config/robot.json → rotations`.
-5. `move "R U R' U' R U R' U' R U R' U' R U R' U' R U R' U' R U R' U'"` — six sexy moves
-   return a solved cube to solved. This proves turn directions and F/B handling together
-   once `F` and `B` are included: `move "F R U R' U' F'"` twice.
+5. `move "F R U R' U' F'"` then its inverse `move "F U R U' R' F'"` returns a solved cube
+   to solved. (Result 2026-09-17: run twice instead of with the inverse, the robot produced
+   exactly the state the model predicts, `B B R / W W W / W W W` on the front.)
 
 ### 3. Scanner
 - Camera capture with locked exposure/white balance and a higher resolution than 640×480.

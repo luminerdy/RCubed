@@ -114,7 +114,9 @@ Verified on hardware 2026-09-17: all 18 face moves, `y`, `y'`, `x` and `x'`.
 2. `move --no-home "y"`: red comes to the front. `move "y'"` undoes it.
 3. `move --no-home "x"`: white goes to the top. `move "x'"` undoes it.
 4. `move "F"` then `move "F'"`: spin, turn, spin home; cube solved again.
-5. `move "F R U R' U' F'"` twice: everything at once; must end solved.
+5. `move "F R U R' U' F'"` then `move "F U R U' R' F'"` (its inverse): everything at
+   once; must end solved. (Done twice, the first sequence leaves the front face
+   `B B R / W W W / W W W`; it takes six repetitions to come back to solved.)
 
 If step 1 turns the wrong way, swap `C` and `A` under `turn` in `config/robot.json`. If
 step 2 or 3 goes the wrong way, swap the letters under `rotations`. Calibration numbers

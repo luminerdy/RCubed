@@ -161,7 +161,7 @@ python3 -m rcubed --sim -v move "F2 B'"     # simulate, print the servo trace</c
     <li><code>move --no-home "y"</code>: red comes to the front. <code>move "y'"</code> undoes it.</li>
     <li><code>move --no-home "x"</code>: white goes to the top. <code>move "x'"</code> undoes it.</li>
     <li><code>move "F"</code> then <code>move "F'"</code>: spin, turn, spin home; cube solved again.</li>
-    <li><code>move "F R U R' U' F'"</code> twice: everything at once; must end solved.</li>
+    <li><code>move "F R U R' U' F'"</code> then <code>move "F U R U' R' F'"</code> (its inverse): everything at once; must end solved. Done twice instead, the first sequence leaves the front face <code>B B R / W W W / W W W</code>; it takes six repetitions to come back to solved.</li>
   </ol>
   <p>If step 1 turns the wrong way, swap <code>C</code> and <code>A</code> under <code>turn</code> in <code>config/robot.json</code>. If step 2 or 3 goes the wrong way, swap the letters under <code>rotations</code>. Calibration numbers live only in that file.</p>
 
