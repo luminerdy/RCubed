@@ -119,6 +119,20 @@ def test_photo_with_claws_at_b_is_refused(rig, cfg):
         Scanner(ch, cam, cfg)._check_view_clear()
 
 
+def test_scan_straight_after_load(cfg, tmp_path):
+    """load -> insert cube -> scan: only arms 3 and 9 engage before the first photo."""
+    robot = Robot(SimBackend(), cfg, state_file=tmp_path / "s.json")
+    ch = Choreographer(robot, cfg)
+    ch.load_position()
+    cam = FakeCamera(lambda: ch.model.face("F"), cfg.camera)
+    start = len(robot.backend.log)
+    Scanner(ch, cam, cfg).scan(tmp_path / "scan", known_state=True)
+    first_photo = next(i for i, e in enumerate(robot.backend.log[start:]) if e[0] == "sleep" and e[1] == cfg.t("rp_engage")) + start
+    targets_before = [e for e in robot.backend.log[start:first_photo] if e[0] == "target"]
+    assert {e[1] for e in targets_before} == {3, 9}  # nothing but the two arms moved
+    assert ch.model.is_home and len(robot.holding()) == 4
+
+
 def test_park_for_photo_is_the_load_pose(rig, cfg):
     robot, ch, _ = rig
     ch.park_for_photo("y")

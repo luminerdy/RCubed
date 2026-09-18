@@ -189,8 +189,16 @@ class Choreographer:
         pair = ROTATION_PAIR[axis]
         other = tuple(g for g in GRIPPERS if g not in pair)
         targets = self.cfg.rotation_targets(axis)  # the quarter-turn end positions
-        if all(self.robot.gripper[g] in ("A", "C") for g in pair) and set(self.robot.holding()) == set(pair):
+        holding = set(self.robot.holding())
+        if all(self.robot.gripper[g] in ("A", "C") for g in pair) and holding <= set(pair):
+            # Already parked (e.g. a cube just inserted at the load pose): just make
+            # sure the pair is holding.
+            need = [g for g in pair if g not in holding]
+            if need:
+                self.engage(*need)
             return
+        if not holding:
+            raise RuntimeError("nothing is holding the cube; run `grip` (or load the cube at the load pose)")
         self.transfer_hold(other)
         for g in other:
             if self.robot.gripper[g] != "B":

@@ -82,10 +82,14 @@ class Scanner:
         self.camera.open()
         box = crop_box(self.cfg.camera, self.camera.width, self.camera.height)
 
-        self.choreo.engage_all()
-        self.choreo.go_home()  # the scan's home frame is the cube's orientation now
         if self.sequence and self.sequence[0] == "photo":
-            self.choreo.park_for_photo("y")  # fingers 2/8 out of view before the first shot
+            # From the load pose this only engages the top/bottom arms; from any
+            # other pose it hands the cube over so fingers 2/8 sit at C/A.
+            self.choreo.park_for_photo("y")
+        else:
+            self.choreo.engage_all()
+        if not self.choreo.model.is_home:
+            self.choreo.go_home()  # the scan's home frame is the cube's orientation now
         # A model whose 54 stickers are unique ids tracks which home facelet each
         # camera cell shows after the rotations, so photos map straight into a
         # 54-facelet string.
