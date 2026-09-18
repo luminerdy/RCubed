@@ -72,7 +72,8 @@
     "crop_ref": [1280, 960],
     "crop": [385, 220, 885, 740],
     "warmup_frames": 10,
-    "flush_frames": 3,
+    "flush_frames": 8,
+    "flush_seconds": 0.5,
     "lock_auto": true,
     "exposure": null,
     "wb_temperature": null

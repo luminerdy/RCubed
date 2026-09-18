@@ -64,6 +64,11 @@ class Camera:
         cap = cv2.VideoCapture(int(self.cfg.get("index", 0)))
         if not cap.isOpened():
             raise RuntimeError(f"cannot open camera index {self.cfg.get('index', 0)}")
+        # The driver keeps a queue of frames. While the robot rotates for two seconds
+        # the queue fills with frames of the *old* face and then stops, so without
+        # draining it the next read returns a stale frame. Ask for the smallest
+        # queue (honoured by V4L2) and drain by time in capture().
+        cap.set(cv2.CAP_PROP_BUFFERSIZE, 1)
         fourcc = self.cfg.get("fourcc")
         if fourcc:
             cap.set(cv2.CAP_PROP_FOURCC, cv2.VideoWriter_fourcc(*fourcc))
@@ -92,8 +97,15 @@ class Camera:
     def capture(self) -> np.ndarray:
         if self.cap is None:
             self.open()
-        for _ in range(int(self.cfg.get("flush_frames", 3))):  # drop buffered stale frames
+        # Drain stale frames: keep grabbing for `flush_seconds` (at 30 fps that is
+        # many more frames than any driver queue holds), then read a live one.
+        deadline = time.monotonic() + float(self.cfg.get("flush_seconds", 0.5))
+        grabbed = 0
+        while time.monotonic() < deadline or grabbed < int(self.cfg.get("flush_frames", 8)):
             self.cap.grab()
+            grabbed += 1
+            if grabbed > 200:
+                break
         ok, frame = self.cap.read()
         if not ok or frame is None:
             raise RuntimeError("camera read failed")
