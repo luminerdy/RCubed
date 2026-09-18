@@ -9,6 +9,7 @@ pyserial>=3.5           # Pololu Maestro serial protocol
 numpy>=1.24
 opencv-python>=4.8      # camera capture, cropping, colour features
 kociemba>=1.2.1         # two-phase cube solver
+scipy>=1.10             # exact sticker-to-colour assignment (falls back to greedy without it)
 
 # development
 pytest>=7

@@ -9,6 +9,10 @@
     python -m rcubed servo 6 1500             raw pulse width (calibration only)
     python -m rcubed snapshot                 photo with the crop grid drawn (no servo motion)
     python -m rcubed scan [--known]           photograph all six faces into data/scans/<time>/
+    python -m rcubed collect --count 10       scan, scramble, repeat: self-labelled training data
+    python -m rcubed train                    fit the colour model from all labelled scans
+    python -m rcubed read data/scans/<dir>    classify a scan and print the solution (no robot)
+    python -m rcubed solve [--dry-run]        scan, classify, solve, execute
 
     --sim        run against the simulator instead of the Maestro (prints a trace)
     --realtime   make the simulator sleep for real
@@ -53,6 +57,118 @@ def cmd_snapshot(args) -> int:
     return 0
 
 
+def labelled_scan_dirs() -> list[Path]:
+    import json
+
+    out = []
+    for m in sorted((DATA_DIR / "scans").glob("*/manifest.json")):
+        if json.loads(m.read_text()).get("known_state"):
+            out.append(m.parent)
+    return out
+
+
+def cmd_train(args) -> int:
+    from .vision import DEFAULT_MODEL, train
+
+    dirs = [Path(d) for d in args.dirs] or labelled_scan_dirs()
+    if not dirs:
+        print("no labelled scans under data/scans (run `scan --known` or `collect`)")
+        return 1
+    model, report = train(dirs)
+    out = Path(args.out) if args.out else DEFAULT_MODEL
+    model.save(out)
+    print(f"trained on {report['scans']} scans, {report['samples']} stickers, "
+          f"{report['training_errors']} training errors -> {out}")
+    return 0
+
+
+def read_scan(scan_dir: Path, model_path: str | None) -> tuple[str, str | None]:
+    """Classify a scan; return (facelets, solution or None). Prints a report."""
+    from .cube_model import CubeModel
+    from .solver import InvalidCubeError, solve
+    from .vision import DEFAULT_MODEL, ColorModel, classify_scan
+
+    model = ColorModel.load(Path(model_path) if model_path else DEFAULT_MODEL)
+    result = classify_scan(scan_dir, model)
+    for p in result["photos"]:
+        print(f"  {p['file']:28s} {p['face']}  {p['unconstrained']}")
+    print(f"  smallest margin {result['min_margin']:.2f}, "
+          f"{result['changed_by_constraint']} stickers changed by the 8-per-colour rule")
+    cube = CubeModel(result["facelets"])
+    print(cube.pretty())
+    if cube.is_solved:
+        print("cube is already solved")
+        return result["facelets"], ""
+    try:
+        solution = solve(cube)
+    except InvalidCubeError as e:
+        print(f"not a valid cube state: {e}")
+        return result["facelets"], None
+    print(f"solution ({len(solution.split())} moves): {solution}")
+    return result["facelets"], solution
+
+
+def cmd_read(args) -> int:
+    _, solution = read_scan(Path(args.scan_dir), args.model)
+    return 0 if solution is not None else 1
+
+
+def cmd_collect(args, ch, scanner) -> int:
+    """Scan a cube of known state, scramble it with tracked moves, repeat.
+
+    Start with a *solved* cube loaded white front, blue top: that is the only
+    way the model's state is known at the start. Every scan is then labelled by
+    the model. If a colour model already exists, each scan is also read back
+    and any disagreement is reported: that is how a slipped move shows up."""
+    import random
+
+    from .vision import DEFAULT_MODEL, ColorModel, classify_scan
+
+    model = ColorModel.load(DEFAULT_MODEL) if DEFAULT_MODEL.exists() else None
+    if not ch.model.is_solved:
+        print("warning: the tracked cube state is not solved; labels assume the cube matches the model")
+    moves = [f + s for f in "URFDLB" for s in ("", "'", "2")]
+    for i in range(1, args.count + 1):
+        out = DATA_DIR / "scans" / time.strftime("%Y%m%d-%H%M%S")
+        scanner.scan(out, known_state=True)
+        note = ""
+        if model is not None:
+            got = classify_scan(out, model)["facelets"]
+            diff = sum(a != b for a, b in zip(got, ch.model.state))
+            note = f"  read-back mismatches: {diff}" + ("  <-- check for a slipped move" if diff else "")
+        print(f"[{i}/{args.count}] {out.name}{note}")
+        if i < args.count:
+            scr = []
+            while len(scr) < args.moves:
+                m = random.choice(moves)
+                if scr and m[0] == scr[-1][0]:
+                    continue  # no two moves on the same face in a row
+                scr.append(m)
+            ch.execute(" ".join(scr))
+    return 0
+
+
+def cmd_solve(args, ch, scanner) -> int:
+    out = DATA_DIR / "scans" / time.strftime("%Y%m%d-%H%M%S")
+    scanner.scan(out, known_state=False)
+    facelets, solution = read_scan(out, args.model)
+    if solution is None:
+        print("cannot solve: fix the reading first (see the scan in", out, ")")
+        return 1
+    if solution == "":
+        return 0
+    if args.dry_run:
+        print("dry run: not executing")
+        return 0
+    from .cube_model import CubeModel
+
+    ch.model = CubeModel(facelets)  # the robot now knows the real state
+    ch.execute(solution)
+    print("solved" if ch.model.is_solved else "executed, but the tracked state is not solved")
+    print(ch.status())
+    return 0
+
+
 def open_robot(args) -> tuple[Robot, Choreographer]:
     cfg = RobotConfig.load(args.config)
     if args.sim:
@@ -94,12 +210,28 @@ def main(argv: list[str] | None = None) -> int:
     sc.add_argument("--out", help="directory (default data/scans/<timestamp>)")
     sc.add_argument("--known", action="store_true", help="the cube state is known (labels are trustworthy)")
     sc.add_argument("--no-home", action="store_true")
+    co = sub.add_parser("collect")
+    co.add_argument("--count", type=int, default=10, help="number of scans")
+    co.add_argument("--moves", type=int, default=8, help="scramble length between scans")
+    tr = sub.add_parser("train")
+    tr.add_argument("dirs", nargs="*", help="scan directories (default: all labelled under data/scans)")
+    tr.add_argument("--out")
+    rd = sub.add_parser("read")
+    rd.add_argument("scan_dir")
+    rd.add_argument("--model")
+    so = sub.add_parser("solve")
+    so.add_argument("--dry-run", action="store_true", help="scan and solve but do not execute")
+    so.add_argument("--model")
 
     args = p.parse_args(argv)
     logging.basicConfig(level=logging.DEBUG if args.verbose else logging.INFO, format="%(message)s")
 
     if args.cmd == "snapshot":
         return cmd_snapshot(args)
+    if args.cmd == "train":
+        return cmd_train(args)
+    if args.cmd == "read":
+        return cmd_read(args)
 
     robot, ch = open_robot(args)
     try:
@@ -135,7 +267,7 @@ def main(argv: list[str] | None = None) -> int:
             robot.set_raw(args.channel, args.us)
             robot.invalidate_state()
             print(f"channel {args.channel} -> {args.us} us (state invalidated)")
-        elif args.cmd == "scan":
+        elif args.cmd in ("scan", "collect", "solve"):
             from .scanner import Scanner
 
             if args.sim:
@@ -146,16 +278,22 @@ def main(argv: list[str] | None = None) -> int:
                 from .camera import Camera
 
                 camera = Camera(robot.cfg.camera)
-            out = Path(args.out) if args.out else DATA_DIR / "scans" / time.strftime("%Y%m%d-%H%M%S")
+            scanner = Scanner(ch, camera, robot.cfg)
             ch.ensure_known()
             try:
-                manifest = Scanner(ch, camera, robot.cfg).scan(out, known_state=args.known, home=not args.no_home)
+                if args.cmd == "scan":
+                    out = Path(args.out) if args.out else DATA_DIR / "scans" / time.strftime("%Y%m%d-%H%M%S")
+                    manifest = scanner.scan(out, known_state=args.known, home=not args.no_home)
+                    print(f"{len(manifest['photos'])} photos -> {out}")
+                    for ph in manifest["photos"]:
+                        print(f"  {ph['file']:28s} {ph['color']:7s} {ph['stickers']}")
+                    print(ch.status())
+                elif args.cmd == "collect":
+                    return cmd_collect(args, ch, scanner)
+                else:
+                    return cmd_solve(args, ch, scanner)
             finally:
                 camera.close()
-            print(f"{len(manifest['photos'])} photos -> {out}")
-            for ph in manifest["photos"]:
-                print(f"  {ph['file']:28s} {ph['color']:7s} {ph['stickers']}")
-            print(ch.status())
     except KeyboardInterrupt:
         print("\ninterrupted — retracting all RPs", file=sys.stderr)
         for g in (0, 2, 6, 8):
