@@ -182,6 +182,25 @@ class Choreographer:
                     self.robot.set_gripper(g, "B")
             self.robot.settle(self.cfg.t("gripper_move"))
 
+    def park_for_photo(self, axis: str = "y") -> None:
+        """Hold the cube with one opposite pair parked at A/C (fingers out of the
+        camera's view), the other pair released. For the y pair this is the load
+        pose: 2 at C, 8 at A. The cube does not move."""
+        pair = ROTATION_PAIR[axis]
+        other = tuple(g for g in GRIPPERS if g not in pair)
+        targets = self.cfg.rotation_targets(axis)  # the quarter-turn end positions
+        if all(self.robot.gripper[g] in ("A", "C") for g in pair) and set(self.robot.holding()) == set(pair):
+            return
+        self.transfer_hold(other)
+        for g in other:
+            if self.robot.gripper[g] != "B":
+                self.robot.set_gripper(g, "B")
+        for g in pair:
+            if self.robot.gripper[g] != targets[g]:
+                self.robot.set_gripper(g, targets[g])
+        self.robot.settle(self.cfg.t("gripper_move"))
+        self.transfer_hold(pair)
+
     def _rotation_speed(self, axis: str, g: int) -> int | None:
         return self.cfg.x_speed(g) if axis == "x" else None
 

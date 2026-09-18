@@ -30,7 +30,9 @@ from .lights import NullLights
 
 log = logging.getLogger("rcubed.scan")
 
-DEFAULT_SEQUENCE = ["y", "photo", "y2", "photo", "y", "photo", "y2", "photo", "x'", "photo", "x2", "photo"]
+# Front from the load pose, half spin for the back, tumble for top and bottom,
+# spin for the two sides. Six photos, six rotations.
+DEFAULT_SEQUENCE = ["photo", "y2", "photo", "x'", "photo", "x2", "photo", "y", "photo", "y2", "photo"]
 
 
 class OccludedError(RuntimeError):
@@ -82,6 +84,8 @@ class Scanner:
 
         self.choreo.engage_all()
         self.choreo.go_home()  # the scan's home frame is the cube's orientation now
+        if self.sequence and self.sequence[0] == "photo":
+            self.choreo.park_for_photo("y")  # fingers 2/8 out of view before the first shot
         # A model whose 54 stickers are unique ids tracks which home facelet each
         # camera cell shows after the rotations, so photos map straight into a
         # 54-facelet string.

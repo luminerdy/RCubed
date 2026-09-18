@@ -86,7 +86,7 @@
       "(out of view) and the other pair is retracted. Claws at B hide the edge stickers.",
       "lighting: one photo per state per face; NullLights ignores the names."
     ],
-    "sequence": ["y", "photo", "y2", "photo", "y", "photo", "y2", "photo", "x'", "photo", "x2", "photo"],
+    "sequence": ["photo", "y2", "photo", "x'", "photo", "x2", "photo", "y", "photo", "y2", "photo"],
     "lighting": ["default"]
   }
 }

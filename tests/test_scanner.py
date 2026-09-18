@@ -112,13 +112,22 @@ def test_bad_sequence_is_rejected(rig, cfg):
         Scanner(ch, cam, cfg2)
 
 
-def test_photo_with_claws_at_b_is_refused(rig, cfg, tmp_path):
-    """Photographing at the home pose (all claws engaged at B) hides four stickers."""
+def test_photo_with_claws_at_b_is_refused(rig, cfg):
+    """At the home pose (all claws engaged at B) four stickers are hidden."""
     _, ch, cam = rig
-    seq = ["photo", "y", "photo", "y2", "photo", "y'", "photo", "x'", "photo", "x2", "photo"]
-    cfg2 = RobotConfig({**cfg.raw, "scan": {"sequence": seq}})
     with pytest.raises(OccludedError):
-        Scanner(ch, cam, cfg2).scan(tmp_path / "scan")
+        Scanner(ch, cam, cfg)._check_view_clear()
+
+
+def test_park_for_photo_is_the_load_pose(rig, cfg):
+    robot, ch, _ = rig
+    ch.park_for_photo("y")
+    assert {g: robot.gripper[g] for g in GRIPPERS} == cfg.load_position()
+    assert set(robot.holding()) == {2, 8}
+    assert ch.model.is_home
+    n = len(robot.backend.log)
+    ch.park_for_photo("y")  # already parked: nothing moves
+    assert len(robot.backend.log) == n
 
 
 def test_configured_sequence_never_occludes(rig, cfg, tmp_path):
