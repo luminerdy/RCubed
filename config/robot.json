@@ -60,9 +60,30 @@
   },
 
   "camera": {
+    "_comment": [
+      "crop is [x1, y1, x2, y2] measured on a crop_ref-sized frame and scaled to the capture size.",
+      "lock_auto: warm up with auto exposure / white balance, then freeze them for the scan.",
+      "exposure / wb_temperature: null = keep whatever auto settled on; set numbers to force."
+    ],
     "index": 0,
-    "width": 640,
-    "height": 480,
-    "crop": [180, 75, 460, 400]
+    "width": 1280,
+    "height": 960,
+    "fourcc": "MJPG",
+    "crop_ref": [640, 480],
+    "crop": [180, 75, 460, 400],
+    "warmup_frames": 10,
+    "flush_frames": 3,
+    "lock_auto": true,
+    "exposure": null,
+    "wb_temperature": null
+  },
+
+  "scan": {
+    "_comment": [
+      "sequence: 'photo' shoots the face at the front; other entries are cube rotations.",
+      "lighting: one photo per state per face; NullLights ignores the names."
+    ],
+    "sequence": ["photo", "y", "photo", "y2", "photo", "y'", "photo", "x'", "photo", "x2", "photo"],
+    "lighting": ["default"]
   }
 }
