@@ -10,7 +10,7 @@ from rcubed.choreography import Choreographer
 from rcubed.config import GRIPPERS, RobotConfig
 from rcubed.cube_model import FACES, CubeModel
 from rcubed.robot import Robot
-from rcubed.scanner import DEFAULT_SEQUENCE, Scanner, faces_covered
+from rcubed.scanner import DEFAULT_SEQUENCE, OccludedError, Scanner, faces_covered
 
 
 @pytest.fixture
@@ -44,9 +44,10 @@ def test_default_sequence_covers_all_six_faces():
 
 
 def test_crop_box_scales_with_resolution(cfg):
-    assert crop_box(cfg.camera, 640, 480) == tuple(cfg.camera["crop"])
-    x1, y1, x2, y2 = crop_box(cfg.camera, 1280, 960)
-    assert (x1, y1, x2, y2) == tuple(v * 2 for v in cfg.camera["crop"])
+    rw, rh = cfg.camera["crop_ref"]
+    assert crop_box(cfg.camera, rw, rh) == tuple(cfg.camera["crop"])
+    half = crop_box(cfg.camera, rw // 2, rh // 2)
+    assert half == tuple(v // 2 for v in cfg.camera["crop"])
 
 
 def test_scan_solved_cube(rig, cfg, tmp_path):
@@ -109,3 +110,30 @@ def test_bad_sequence_is_rejected(rig, cfg):
     cfg2 = RobotConfig({**cfg.raw, "scan": {"sequence": ["photo", "y", "photo"]}})
     with pytest.raises(ValueError):
         Scanner(ch, cam, cfg2)
+
+
+def test_photo_with_claws_at_b_is_refused(rig, cfg, tmp_path):
+    """Photographing at the home pose (all claws engaged at B) hides four stickers."""
+    _, ch, cam = rig
+    seq = ["photo", "y", "photo", "y2", "photo", "y'", "photo", "x'", "photo", "x2", "photo"]
+    cfg2 = RobotConfig({**cfg.raw, "scan": {"sequence": seq}})
+    with pytest.raises(OccludedError):
+        Scanner(ch, cam, cfg2).scan(tmp_path / "scan")
+
+
+def test_configured_sequence_never_occludes(rig, cfg, tmp_path):
+    """Every photo in the configured sequence happens with the holding pair at A/C."""
+    robot, ch, cam = rig
+    states = []
+    orig = cam.capture
+
+    def spy():
+        states.append(({g: robot.gripper[g] for g in GRIPPERS}, robot.holding()))
+        return orig()
+
+    cam.capture = spy
+    Scanner(ch, cam, cfg).scan(tmp_path / "scan")
+    assert len(states) == 6
+    for grippers, holding in states:
+        assert all(grippers[g] in ("A", "C") for g in holding)
+        assert len(holding) == 2

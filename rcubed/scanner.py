@@ -30,7 +30,11 @@ from .lights import NullLights
 
 log = logging.getLogger("rcubed.scan")
 
-DEFAULT_SEQUENCE = ["photo", "y", "photo", "y2", "photo", "y'", "photo", "x'", "photo", "x2", "photo"]
+DEFAULT_SEQUENCE = ["y", "photo", "y2", "photo", "y", "photo", "y2", "photo", "x'", "photo", "x2", "photo"]
+
+
+class OccludedError(RuntimeError):
+    """A claw would be in the camera's view of the face."""
 
 COLOR_NAMES = {"U": "blue", "R": "red", "F": "white", "D": "green", "L": "orange", "B": "yellow"}
 
@@ -60,6 +64,14 @@ class Scanner:
         if sorted(set(covered)) != sorted(FACES):
             raise ValueError(f"scan sequence covers {covered}, not all six faces")
 
+    def _check_view_clear(self) -> None:
+        """An engaged claw parked at B or D covers the middle sticker of its edge.
+        Only claws at A or C (or retracted ones) leave the face fully visible."""
+        robot = self.choreo.robot
+        blocking = [g for g in robot.holding() if robot.gripper[g] not in ("A", "C")]
+        if blocking:
+            raise OccludedError(f"grippers {blocking} are engaged at B/D and would hide stickers")
+
     def scan(self, out_dir: Path, known_state: bool = False, home: bool = True) -> dict:
         import cv2
 
@@ -83,6 +95,7 @@ class Scanner:
                 ids.apply(step)
                 continue
             n += 1
+            self._check_view_clear()
             model = self.choreo.model
             face = model.center("F")
             facelets = [ord(c) - 65 for c in ids.face("F")]

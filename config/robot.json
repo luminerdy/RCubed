@@ -69,8 +69,8 @@
     "width": 1280,
     "height": 960,
     "fourcc": "MJPG",
-    "crop_ref": [640, 480],
-    "crop": [180, 75, 460, 400],
+    "crop_ref": [1280, 960],
+    "crop": [385, 220, 885, 740],
     "warmup_frames": 10,
     "flush_frames": 3,
     "lock_auto": true,
@@ -81,9 +81,11 @@
   "scan": {
     "_comment": [
       "sequence: 'photo' shoots the face at the front; other entries are cube rotations.",
+      "A photo is only valid right after a rotation: the holding pair is then parked at A/C",
+      "(out of view) and the other pair is retracted. Claws at B hide the edge stickers.",
       "lighting: one photo per state per face; NullLights ignores the names."
     ],
-    "sequence": ["photo", "y", "photo", "y2", "photo", "y'", "photo", "x'", "photo", "x2", "photo"],
+    "sequence": ["y", "photo", "y2", "photo", "y", "photo", "y2", "photo", "x'", "photo", "x2", "photo"],
     "lighting": ["default"]
   }
 }
