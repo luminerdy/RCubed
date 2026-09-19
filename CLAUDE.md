@@ -17,12 +17,16 @@ it, and do not port its bugs. `legacy/CLAUDE.md` describes that old world, not t
 
 ## Current status (update this line when it changes)
 
-Phase 2 (robot layer) is done and verified on the robot (2026-09-17): all 18 face
-moves, x/y rotations, pair resets. Next: Phase 3, the scanner (`docs/PLAN.md` §3).
-Lighting decision pending: an addressable RGBW NeoPixel ring (Adafruit 2863) is being
-considered instead of a plain ring light, so the scanner should take a configurable list
-of lighting states per face. Open housekeeping: revoke the old GitHub token and delete
-`~/github.txt` / `~/RootPW.txt` on the Pi.
+Phases 2–5 (robot layer, scanner, vision, pipeline) are code-complete and verified on
+the robot through 2026-09-18: all 18 face moves, x/y rotations, synchronised rotation
+speeds, a working `x2` toggle, a 6-photo scan, and a first real scan reading correctly
+via `train`/`read`. Next up: **Phase 6, speed tuning** (`docs/PLAN.md` §6) — raise
+rotation speed and shrink the fixed wait times a step at a time, watched by hand (no
+real position feedback exists on this hardware). After that: collect a real training
+set once the ring light is mounted (Adafruit 2863 RGBW NeoPixel under consideration
+over a plain ring light — scanner already takes a configurable lighting list per face).
+Open housekeeping: revoke the old GitHub token and delete `~/github.txt` /
+`~/RootPW.txt` on the Pi.
 
 ## Where things run
 

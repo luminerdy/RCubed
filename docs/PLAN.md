@@ -39,40 +39,54 @@ The acceptance steps that were used, for reference:
    to solved. (Result 2026-09-17: run twice instead of with the inverse, the robot produced
    exactly the state the model predicts, `B B R / W W W / W W W` on the front.)
 
-### 3. Scanner
-- Camera capture with locked exposure/white balance and a higher resolution than 640×480.
-- Scan choreography producing six face images, each tagged with the physical face it shows.
-- Because the cube model is physical-frame, the expected sticker order for each image is
-  read straight from the model (no hand-derived rotation corrections).
+### 3. Scanner — done
+Verified on the robot 2026-09-17/18: 6-face scan from the load pose (`photo, y2, photo,
+x', photo, x2, photo, y, photo, y2, photo`), 1280×960 MJPG, crop box measured from a real
+snapshot. Because the cube model is physical-frame, expected sticker order per image is
+read straight from the model — no hand-derived rotation corrections.
 
-### 4. Vision (the part that failed before)
-- Feature extraction: for each of the 9 grid cells, the mean and spread of colour in a
-  central patch (LAB and HSV), plus the same features normalised against the frame's
-  white centre to cancel lighting drift.
-- **Self-labelled data.** Insert a solved cube; every scan is labelled for free. Then the
-  robot applies random moves it tracks in the model, scanning after each, so every image
-  carries ground-truth labels with no manual clicking. Target 50–100 scans under the
-  final lighting.
-- Classifier: k-nearest-neighbours or a small multinomial logistic regression on the
-  features; evaluated on held-out scans. Falls back to nothing: if accuracy is not 100%
-  on held-out data, fix lighting or features, not the model size.
-- **Constrained assignment.** All 54 stickers are assigned at once under the rule of
-  exactly 9 per colour, with centres known; then the state must be accepted by Kociemba.
-  Ambiguous orange/red and white/yellow stickers get resolved by the counts.
+### 4. Vision — done, first real scan reads clean
+`rcubed/vision.py`: median L\*a\*b\* per cell → Gaussian classifier (class means + pooled
+covariance) → constrained assignment (exactly 8 non-centre stickers per colour, centres
+known from the choreography). `collect` scans a known cube, applies a tracked scramble,
+repeats — self-labelled, no manual clicking. `train` fits the model; `read`/`solve`
+classify a scan and hand it to the solver. First real scan on 2026-09-17: 52/54 correct
+unconstrained, 54/54 after the count constraint.
 
-### 5. Pipeline
-- `python3 -m rcubed solve`: scan → classify → Kociemba → execute → verify by re-scanning.
-- Retry on Maestro USB errors; Ctrl-C safe stop (already in the CLI).
-- Ten consecutive solves on different scrambles without intervention.
+Still open: collect a proper training set (`collect --count ~20`) under final lighting
+once the ring light is mounted, and re-train.
 
-### 6. Later, optional
+### 5. Pipeline — mostly done
+`solve` does scan → classify → Kociemba → execute (`--dry-run` stops before moving).
+Not yet done: verify-by-rescan after execution, retry on Maestro USB errors, ten
+consecutive solves on different scrambles.
+
+### 6. Speed tuning — next session (2026-09-19)
+Context: the robot works correctly but is slow to watch, most of it fixed `time.sleep()`
+padding carried over unmeasured from the legacy code. Two fixes already landed
+(2026-09-18): synchronised rotation-pair speeds (`_synced_speeds` — the old fixed
+0=60/6=45 split was guesswork, not proportional to actual travel, and let the middle
+slice twist against the outer layers) and a direct `x2` toggle that skips a reset.
+
+**No true position feedback exists.** `get_position()`/`get_moving_state()` only reflect
+the Maestro's own commanded trajectory, not anything sensed from the servo — DS3218 is a
+plain 3-wire servo. So speed increases must be tuned incrementally with someone watching
+the hardware, not automated blindly; going too fast fails silently (the Maestro reports
+"done" on schedule even if the gripper hasn't physically arrived).
+
+Plan: raise `speeds.rotation.x` / `.y` (currently 60) a step at a time, and separately
+try lowering `timing.turn_90`, `turn_180`, `x_rotation`, `y_rotation`, `gripper_move`
+(currently 1.2/2.0/2.5/2.0/0.8s) — watch each change on a solved cube for lag, twist, or
+stall before keeping it. Settle on the fastest values that still look clean.
+
+### 7. Later, optional
 - **Lazy resets.** Do not return a gripper to B after every turn; turn from wherever
-  it is parked. Half turns never need a reset (A↔C, B↔D). Quarter turns only need
-  one at the ends of the range (clockwise from D, counter-clockwise from A). A finger
-  parked at A or C still blocks its neighbours from turning to A or C, so the
-  collision guard decides when a reset is forced.
-- Replace fixed sleeps with position polling to speed up moves.
-- Timing calibration.
+  it is parked. Half turns never need a reset (A↔C, B↔D, and now A↔C for x2 too — see §6
+  history). Quarter turns only need one at the ends of the range (clockwise from D,
+  counter-clockwise from A). A finger parked at A or C still blocks its neighbours from
+  turning to A or C, so the collision guard decides when a reset is forced.
+- Camera-based move verification (compare a photographed face against the expected
+  layout) as a substitute for the position feedback the hardware doesn't have.
 - A physical start button.
 
 ## Testing rule
