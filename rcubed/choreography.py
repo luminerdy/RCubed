@@ -209,8 +209,29 @@ class Choreographer:
         self.robot.settle(self.cfg.t("gripper_move"))
         self.transfer_hold(pair)
 
-    def _rotation_speed(self, axis: str, g: int) -> int | None:
-        return self.cfg.x_speed(g) if axis == "x" else None
+    def _synced_speeds(self, axis: str, targets: dict[int, str]) -> dict[int, int]:
+        """Per-servo speed limits so both grippers of the pair finish together.
+
+        The Maestro moves each servo at its own limit, so with equal limits the one
+        with the shorter travel arrives first and the pair twists the cube. Give the
+        longer travel the configured speed and scale the other down in proportion."""
+        base = self.cfg.rotation_speed(axis)
+        if base <= 0:
+            return {g: 0 for g in targets}
+        dist = {
+            g: abs(self.cfg.gripper_us(g, pos) - self.cfg.gripper_us(g, self.robot.gripper[g]))
+            for g, pos in targets.items()
+        }
+        longest = max(dist.values()) or 1
+        return {g: max(1, round(base * d / longest)) for g, d in dist.items()}
+
+    def _move_pair(self, axis: str, targets: dict[int, str]) -> None:
+        """Command both grippers of a rotation with synchronised speeds."""
+        speeds = self._synced_speeds(axis, targets)
+        for g in targets:  # set every speed before the first target so they start together
+            self.robot.set_speed(g, speeds[g])
+        for g, pos in targets.items():
+            self.robot.set_gripper(g, pos)
 
     def rotate(self, rot: str) -> None:
         """Whole-cube rotation: 'y', "y'", 'y2', 'x', "x'", 'x2'."""
@@ -224,9 +245,8 @@ class Choreographer:
             at_ac = all(self.robot.gripper[g] in ("A", "C") for g in pair)
             if at_ac and self.cfg.half_turn_by_toggle(axis):
                 self._prep_rotation_keep(axis)
-                for g in pair:
-                    target = "A" if self.robot.gripper[g] == "C" else "C"
-                    self.robot.set_gripper(g, target, speed=self._rotation_speed(axis, g))
+                targets = {g: ("A" if self.robot.gripper[g] == "C" else "C") for g in pair}
+                self._move_pair(axis, targets)
                 self.robot.settle(self.cfg.t("half_rotation"))
                 self._after_rotation(axis)
                 self.model.apply(rot)
@@ -238,8 +258,7 @@ class Choreographer:
             return
 
         self._prep_rotation(axis)
-        for g, pos in self.cfg.rotation_targets(rot).items():
-            self.robot.set_gripper(g, pos, speed=self._rotation_speed(axis, g))
+        self._move_pair(axis, self.cfg.rotation_targets(rot))
         self.robot.settle(self.cfg.t(f"{axis}_rotation"))
         self._after_rotation(axis)
         self.model.apply(rot)
@@ -258,9 +277,8 @@ class Choreographer:
             self.robot.settle(self.cfg.t("gripper_move"))
 
     def _after_rotation(self, axis: str) -> None:
-        if axis == "x":
-            for g in ROTATION_PAIR[axis]:
-                self.robot.set_speed(g, 0)
+        for g in ROTATION_PAIR[axis]:  # back to unlimited for face turns and resets
+            self.robot.set_speed(g, 0)
 
     # ── logical API (standard cube notation) ────────────────────────────
     def move(self, token: str) -> None:

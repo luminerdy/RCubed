@@ -83,8 +83,9 @@ class RobotConfig:
     def speed(self, key: str) -> int:
         return int(self.raw["speeds"][key])
 
-    def x_speed(self, g: int) -> int:
-        return int(self.raw["speeds"]["x_rotation"][str(g)])
+    def rotation_speed(self, axis: str) -> int:
+        """Speed limit for the longer-travelling gripper of a rotation pair (0 = unlimited)."""
+        return int(self.raw["speeds"].get("rotation", {}).get(axis, 0))
 
     def t(self, key: str) -> float:
         return float(self.raw["timing"][key])

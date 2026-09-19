@@ -228,6 +228,32 @@ def test_never_more_than_one_collision_free_rotation_pair_off_b(rig):
     assert ch.model == homed(CubeModel().apply(scr))
 
 
+def test_rotation_pair_speeds_are_synchronised(rig, cfg):
+    """Both grippers of a tumble get speeds proportional to their travel, set before
+    either target is sent, and cleared afterwards."""
+    backend, robot, ch = rig
+    ch.safe_startup()
+    ch.engage_all()
+    start = len(backend.log)
+    ch.rotate("x")
+    log = backend.log[start:]
+    targets = cfg.rotation_targets("x")
+    dist = {g: abs(cfg.gripper_us(g, p) - cfg.gripper_us(g, "B")) for g, p in targets.items()}
+    longest = max(dist, key=dist.get)
+    speeds = {}
+    for i, e in enumerate(log):
+        if e[0] == "speed" and e[1] in targets and e[1] not in speeds:
+            speeds[e[1]] = (e[2], i)
+    first_target = next(i for i, e in enumerate(log) if e[0] == "target" and e[1] in targets)
+    assert speeds[longest][0] == cfg.rotation_speed("x")
+    other = next(g for g in targets if g != longest)
+    assert speeds[other][0] == round(cfg.rotation_speed("x") * dist[other] / dist[longest])
+    assert all(i < first_target for _, i in speeds.values())
+    # cleared afterwards
+    last = {e[1]: e[2] for e in log if e[0] == "speed" and e[1] in targets}
+    assert all(v == 0 for v in last.values())
+
+
 def test_simulated_solve_time_is_reported(rig):
     backend, _, ch = rig
     ch.safe_startup()

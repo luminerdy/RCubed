@@ -39,11 +39,17 @@
   "load_position": {"0": "B", "2": "C", "6": "B", "8": "A"},
 
   "speeds": {
-    "_comment": "Maestro speed units: 0 = unlimited. Accel 0-255, 0 = unlimited.",
+    "_comment": [
+      "Maestro speed units: 0 = unlimited; otherwise 0.25 us per 10 ms, so 60 = 1500 us/s.",
+      "Accel 0-255, 0 = unlimited.",
+      "rotation: speed of the gripper with the longer travel during a whole-cube rotation;",
+      "the other gripper of the pair is slowed in proportion so both arrive together",
+      "(otherwise they twist the cube). 0 = unlimited for both."
+    ],
     "gripper_accel": 110,
     "rp_engage": 30,
     "rp_retract": 0,
-    "x_rotation": {"0": 60, "6": 45}
+    "rotation": {"x": 60, "y": 60}
   },
 
   "timing": {
