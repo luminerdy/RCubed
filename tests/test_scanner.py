@@ -50,6 +50,19 @@ def test_crop_box_scales_with_resolution(cfg):
     assert half == tuple(v // 2 for v in cfg.camera["crop"])
 
 
+def test_scan_from_fresh_safe_startup(cfg, tmp_path):
+    """A scan is often the very first command of a session: nothing has been
+    engaged yet, only safe_startup has run. It must not need a prior `grip`."""
+    robot = Robot(SimBackend(), cfg, state_file=tmp_path / "s.json")
+    ch = Choreographer(robot, cfg)
+    ch.safe_startup()
+    assert robot.holding() == ()
+    cam = FakeCamera(lambda: ch.model.face("F"), cfg.camera)
+    manifest = Scanner(ch, cam, cfg).scan(tmp_path / "scan", known_state=True)
+    assert len(manifest["photos"]) == 6
+    assert len(robot.holding()) == 4
+
+
 def test_scan_solved_cube(rig, cfg, tmp_path):
     robot, ch, cam = rig
     out = tmp_path / "scan"

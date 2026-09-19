@@ -198,7 +198,7 @@ class Choreographer:
                 self.engage(*need)
             return
         if not holding:
-            raise RuntimeError("nothing is holding the cube; run `grip` (or load the cube at the load pose)")
+            self.engage_all()  # first-ever move: nothing held yet, establish a safe baseline
         self.transfer_hold(other)
         for g in other:
             if self.robot.gripper[g] != "B":

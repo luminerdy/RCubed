@@ -228,6 +228,35 @@ def test_never_more_than_one_collision_free_rotation_pair_off_b(rig):
     assert ch.model == homed(CubeModel().apply(scr))
 
 
+def test_x2_toggles_directly_when_already_parked(rig, cfg):
+    """After x', grippers 0/6 sit at C/A -- a following x2 should flip them straight
+    to A/C (the x target) without a detour back through B."""
+    backend, robot, ch = rig
+    ch.safe_startup()
+    ch.engage_all()
+    ch.rotate("x'")
+    assert robot.gripper[0] == "C" and robot.gripper[6] == "A"
+    start = len(backend.log)
+    ch.rotate("x2")
+    targets = [e for e in backend.log[start:] if e[0] == "target" and e[1] in (0, 6)]
+    assert not any(e[2] == cfg.gripper_us(e[1], "B") for e in targets)  # never routed through B
+    assert robot.gripper[0] == "A" and robot.gripper[6] == "C"
+    assert ch.model == CubeModel().apply("x' x2")
+
+
+def test_x2_falls_back_to_two_quarter_turns_from_b(rig, cfg):
+    """A bare x2 from the neutral pose (grippers at B) can't toggle -- it does two x's."""
+    backend, robot, ch = rig
+    ch.safe_startup()
+    ch.engage_all()
+    assert robot.gripper[0] == "B" and robot.gripper[6] == "B"
+    start = len(backend.log)
+    ch.rotate("x2")
+    targets = [e for e in backend.log[start:] if e[0] == "target" and e[1] in (0, 6)]
+    assert any(e[2] == cfg.gripper_us(e[1], "B") for e in targets)  # passes back through B
+    assert ch.model == CubeModel().apply("x2")
+
+
 def test_rotation_pair_speeds_are_synchronised(rig, cfg):
     """Both grippers of a tumble get speeds proportional to their travel, set before
     either target is sent, and cleared afterwards."""

@@ -33,7 +33,14 @@
     "y'": {"2": "A", "8": "C"},
     "x":  {"0": "A", "6": "C"},
     "x'": {"0": "C", "6": "A"},
-    "half_turn_by_toggle": {"y": true, "x": false}
+    "half_turn_by_toggle_comment": [
+      "When both grippers of the pair are already at A or C (not B/D), a 2 rotation",
+      "flips each straight to its opposite letter instead of resetting to B first and",
+      "turning again. E.g. after x' (0:C, 6:A), x2 flips to 0:A, 6:C -- exactly the x",
+      "target -- in one move. Falls back to two full quarter turns when starting from B.",
+      "x enabled and verified on hardware 2026-09-18 (after the rotation-speed sync fix)."
+    ],
+    "half_turn_by_toggle": {"y": true, "x": true}
   },
 
   "load_position": {"0": "B", "2": "C", "6": "B", "8": "A"},
