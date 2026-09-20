@@ -228,6 +228,29 @@ def test_never_more_than_one_collision_free_rotation_pair_off_b(rig):
     assert ch.model == homed(CubeModel().apply(scr))
 
 
+def test_scaled_timing_shortens_waits_but_not_the_safety_bound(cfg):
+    half = cfg.scaled_timing(0.5)
+    assert half.t("turn_90") == cfg.t("turn_90") / 2
+    assert half.t("x_rotation") == cfg.t("x_rotation") / 2
+    assert half.t("settle_poll_timeout") == cfg.t("settle_poll_timeout")
+    assert cfg.scaled_timing(1.0) is cfg
+    # calibration must be untouched
+    assert half.gripper_us(0, "A") == cfg.gripper_us(0, "A")
+    assert half.rotation_speed("x") == cfg.rotation_speed("x")
+
+
+def test_scaled_timing_changes_run_duration(cfg, tmp_path):
+    def duration(scale):
+        b = SimBackend()
+        r = Robot(b, cfg.scaled_timing(scale), state_file=None)
+        ch = Choreographer(r, cfg.scaled_timing(scale))
+        ch.safe_startup()
+        ch.execute("R U R' U'")
+        return b.clock
+
+    assert duration(0.5) < duration(1.0) * 0.6
+
+
 def test_undo_rotation_sweeps_straight_back(rig, cfg):
     """After x the pair grips at A/C. x' just steps them back to B -- that sweep is
     the rotation, so no RP should move at all (no handover to the other pair)."""

@@ -170,7 +170,10 @@ def cmd_solve(args, ch, scanner) -> int:
 
 
 def open_robot(args) -> tuple[Robot, Choreographer]:
-    cfg = RobotConfig.load(args.config)
+    cfg = RobotConfig.load(args.config).scaled_timing(getattr(args, "timing_scale", 1.0))
+    if getattr(args, "timing_scale", 1.0) != 1.0:
+        print(f"timing scaled to {args.timing_scale:g}x: "
+              + " ".join(f"{k}={cfg.t(k)}" for k in ("turn_90", "x_rotation", "rp_engage")))
     if args.sim:
         backend = SimBackend(realtime=args.realtime, echo=args.verbose)
         robot = Robot(backend, cfg, state_file=None)  # never touch the real state file
@@ -189,6 +192,8 @@ def main(argv: list[str] | None = None) -> int:
     p.add_argument("--realtime", action="store_true", help="simulator sleeps for real")
     p.add_argument("--port", help="Maestro command port (default: auto-detect)")
     p.add_argument("--config", help="path to robot.json")
+    p.add_argument("--timing-scale", type=float, default=1.0, metavar="F",
+                   help="multiply every wait by F for a tuning run (1.0 = config as written)")
     p.add_argument("-v", "--verbose", action="store_true")
     sub = p.add_subparsers(dest="cmd", required=True)
 

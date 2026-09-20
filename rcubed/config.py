@@ -38,6 +38,17 @@ class RobotConfig:
         with open(p) as f:
             return cls(json.load(f), p)
 
+    def scaled_timing(self, factor: float) -> "RobotConfig":
+        """A copy with every wait multiplied by `factor`, for tuning runs.
+        `settle_poll_timeout` is a safety bound and is left alone."""
+        if factor == 1.0:
+            return self
+        timing = {
+            k: (round(v * factor, 3) if isinstance(v, (int, float)) and k != "settle_poll_timeout" else v)
+            for k, v in self.raw["timing"].items()
+        }
+        return RobotConfig({**self.raw, "timing": timing}, self.path)
+
     # ── grippers ────────────────────────────────────────────────────────
     def gripper_us(self, g: int, pos: str) -> int:
         return int(self.raw["grippers"][str(g)][pos])
