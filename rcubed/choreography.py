@@ -17,7 +17,7 @@ from __future__ import annotations
 
 import logging
 
-from .config import GRIPPERS, GRIPPER_FACES, ROTATION_PAIR, RobotConfig
+from .config import GRIPPERS, GRIPPER_FACES, POSITIONS, ROTATION_PAIR, RobotConfig
 from .cube_model import CubeModel, parse_moves, rotations_to_home
 from .robot import Robot
 
@@ -257,13 +257,48 @@ class Choreographer:
                 self.rotate(axis)
             return
 
-        self._prep_rotation(axis)
-        self._move_pair(axis, self.cfg.rotation_targets(rot))
+        # If the pair is already gripping the cube off B and this rotation steps them
+        # back, that sweep *is* the rotation -- no reset, no handover. This is the
+        # undo case: x right after x', y right after y'.
+        stepped = self._step_targets(rot)
+        if stepped is not None and set(self.robot.holding()) == set(pair):
+            log.debug("  [direct: %s]", " ".join(f"{g}->{p}" for g, p in stepped.items()))
+            self._move_pair(axis, stepped)
+        else:
+            self._prep_rotation(axis)
+            self._move_pair(axis, self.cfg.rotation_targets(rot))
         self.robot.settle(self.cfg.t(f"{axis}_rotation"))
         self._after_rotation(axis)
         self.model.apply(rot)
         self.rotations += 1
         self._sync()
+
+    def _rotation_step(self, rot: str) -> dict[int, int]:
+        """How far each gripper of the pair travels for one quarter rotation, as a
+        signed number of positions. Derived from the config's B-relative targets, so
+        `x` = {0: -1, 6: +1} and `x'` is its mirror. The two grippers of a pair always
+        step in opposite directions -- that is what turns the cube between them."""
+        b = POSITIONS.index("B")
+        return {g: POSITIONS.index(pos) - b for g, pos in self.cfg.rotation_targets(rot).items()}
+
+    def _step_targets(self, rot: str) -> dict[int, str] | None:
+        """Where a quarter rotation lands if each gripper simply steps on from where
+        it is now. None when either gripper would run off the end of the A..D range.
+
+        Because the pair steps in opposite directions, this only ever succeeds when
+        the rotation undoes the one that parked them -- and then both land on B.
+        Repeating a rotation in the same direction always runs one gripper off the
+        end, and falls back to resetting through B."""
+        out = {}
+        for g, step in self._rotation_step(rot).items():
+            here = self.robot.gripper[g]
+            if here is None:
+                return None
+            i = POSITIONS.index(here) + step
+            if not 0 <= i < len(POSITIONS):
+                return None
+            out[g] = POSITIONS[i]
+        return out
 
     def _prep_rotation_keep(self, axis: str) -> None:
         """Like _prep_rotation but the pair stays at A/C (for a half turn by toggle)."""

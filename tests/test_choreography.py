@@ -228,6 +228,50 @@ def test_never_more_than_one_collision_free_rotation_pair_off_b(rig):
     assert ch.model == homed(CubeModel().apply(scr))
 
 
+def test_undo_rotation_sweeps_straight_back(rig, cfg):
+    """After x the pair grips at A/C. x' just steps them back to B -- that sweep is
+    the rotation, so no RP should move at all (no handover to the other pair)."""
+    backend, robot, ch = rig
+    ch.safe_startup()
+    ch.engage_all()
+    ch.rotate("x")
+    assert (robot.gripper[0], robot.gripper[6]) == ("A", "C")
+    start = len(backend.log)
+    ch.rotate("x'")
+    assert (robot.gripper[0], robot.gripper[6]) == ("B", "B")
+    rp_moves = [e for e in backend.log[start:] if e[0] == "target" and e[1] in (1, 3, 7, 9)]
+    assert rp_moves == []          # nothing was released or re-engaged
+    assert set(robot.holding()) == {0, 6}
+    assert ch.model.is_home
+    assert ch.model == CubeModel()
+
+
+@pytest.mark.parametrize("first,undo", [("x", "x'"), ("x'", "x"), ("y", "y'"), ("y'", "y")])
+def test_undo_is_direct_on_both_axes(rig, cfg, first, undo):
+    backend, robot, ch = rig
+    ch.safe_startup()
+    ch.engage_all()
+    ch.rotate(first)
+    start = len(backend.log)
+    ch.rotate(undo)
+    assert not [e for e in backend.log[start:] if e[0] == "target" and e[1] in (1, 3, 7, 9)]
+    assert ch.model == CubeModel()
+
+
+def test_repeating_a_rotation_still_resets_through_b(rig, cfg):
+    """Two x moves in a row can't step directly -- gripper 0 would run off past A --
+    so the second one goes back through B with a handover, as before."""
+    backend, robot, ch = rig
+    ch.safe_startup()
+    ch.engage_all()
+    ch.rotate("x")
+    start = len(backend.log)
+    ch.rotate("x")
+    assert [e for e in backend.log[start:] if e[0] == "target" and e[1] in (1, 3, 7, 9)]
+    assert (robot.gripper[0], robot.gripper[6]) == ("A", "C")
+    assert ch.model == CubeModel().apply("x x")
+
+
 def test_x2_toggles_directly_when_already_parked(rig, cfg):
     """After x', grippers 0/6 sit at C/A -- a following x2 should flip them straight
     to A/C (the x target) without a detour back through B."""
